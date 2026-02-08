@@ -496,7 +496,7 @@ function Components:CreateTextbox(parent, text, placeholder, callback)
 end
 
 --════════════════════════════════════════════════════════════════
--- CREATE DROPDOWN ✨ (NEW)
+-- CREATE DROPDOWN ✨ (FIXED VERSION)
 --════════════════════════════════════════════════════════════════
 function Components:CreateDropdown(parent, text, options, default, callback)
     local Dropdown = Instance.new("Frame")
@@ -541,8 +541,10 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Arrow.TextSize = 8
     Arrow.TextColor3 = Color3.fromRGB(200, 200, 200)
     
-    -- Options Container
-    local OptionsContainer = Instance.new("Frame", Dropdown)
+    -- ════════════════════════════════════════════════════════════
+    -- FIX 1: UBAH KE SCROLLINGFRAME (BIAR BISA SCROLL!)
+    -- ════════════════════════════════════════════════════════════
+    local OptionsContainer = Instance.new("ScrollingFrame", Dropdown)
     OptionsContainer.Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
     OptionsContainer.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
     OptionsContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
@@ -550,6 +552,13 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     OptionsContainer.Visible = false
     OptionsContainer.ClipsDescendants = true
     OptionsContainer.ZIndex = 100
+    
+    -- Scroll settings
+    OptionsContainer.ScrollBarThickness = isMobile and 4 or 3
+    OptionsContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
+    OptionsContainer.ScrollBarImageTransparency = 0.5
+    OptionsContainer.CanvasSize = UDim2.fromOffset(0, 0)
+    OptionsContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     
     Instance.new("UICorner", OptionsContainer).CornerRadius = UDim.new(0, 4)
     
@@ -562,6 +571,11 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     
     local currentValue = default or options[1]
     local isOpen = false
+    
+    -- Update canvas size when options are added
+    OptionsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        OptionsContainer.CanvasSize = UDim2.fromOffset(0, OptionsList.AbsoluteContentSize.Y)
+    end)
     
     -- Create option buttons
     for _, option in ipairs(options) do
@@ -592,17 +606,24 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         OptionButton.MouseButton1Click:Connect(function()
             currentValue = option
             DropdownButton.Text = option
-            if callback then callback(option) end
-            if GUICore then GUICore.PlayClickSound() end
             
-            -- Close dropdown
+            -- ════════════════════════════════════════════════════════════
+            -- FIX 2: CLOSE DROPDOWN DULU, BARU CALLBACK/NOTIF
+            -- ════════════════════════════════════════════════════════════
+            -- Close dropdown IMMEDIATELY
             isOpen = false
-            TweenService:Create(Arrow, TweenInfo.new(0.2), {Rotation = 0}):Play()
-            TweenService:Create(OptionsContainer, TweenInfo.new(0.2), {
+            TweenService:Create(Arrow, TweenInfo.new(0.15), {Rotation = 0}):Play()
+            TweenService:Create(OptionsContainer, TweenInfo.new(0.15), {
                 Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
             }):Play()
-            task.wait(0.2)
+            
+            -- Wait for animation to finish
+            task.wait(0.15)
             OptionsContainer.Visible = false
+            
+            -- THEN play sound and callback
+            if GUICore then GUICore.PlayClickSound() end
+            if callback then callback(option) end
         end)
     end
     
@@ -613,7 +634,22 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         
         if isOpen then
             OptionsContainer.Visible = true
-            local targetHeight = #options * (isMobile and 28 or 24) + (#options - 1) * 2
+            
+            -- Calculate height (max 5 items visible, sisanya scroll)
+            local itemHeight = isMobile and 28 or 24
+            local padding = 2
+            local maxVisibleItems = 5
+            local totalItems = #options
+            
+            local targetHeight
+            if totalItems <= maxVisibleItems then
+                -- Show all items (no scroll needed)
+                targetHeight = (itemHeight * totalItems) + (padding * (totalItems - 1))
+            else
+                -- Show max 5 items (scroll for rest)
+                targetHeight = (itemHeight * maxVisibleItems) + (padding * (maxVisibleItems - 1))
+            end
+            
             TweenService:Create(OptionsContainer, TweenInfo.new(0.2), {
                 Size = UDim2.new(0, isMobile and 100 or 90, 0, targetHeight)
             }):Play()
