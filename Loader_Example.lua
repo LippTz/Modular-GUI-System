@@ -17,8 +17,8 @@ print("━━━━━━━━━━━━━━━━━━━━━━━━�
 --════════════════════════════════════════════════════════════════
 -- LOAD MODULES (GANTI URL INI!)
 --════════════════════════════════════════════════════════════════
-local GUICore = loadstring(game:HttpGet("YOUR_GUI_CORE_URL_HERE"))()
-local Components = loadstring(game:HttpGet("YOUR_GUI_COMPONENTS_URL_HERE"))()
+local GUICore = loadstring(game:HttpGet("https://raw.githubusercontent.com/LippTz/Modular-GUI-System/refs/heads/main/GUI_Core.lua"))()
+local Components = loadstring(game:HttpGet("https://raw.githubusercontent.com/LippTz/Modular-GUI-System/refs/heads/main/GUI_Components.lua"))()
 
 -- Initialize Components with GUICore (untuk sound effects)
 Components.Init(GUICore)
