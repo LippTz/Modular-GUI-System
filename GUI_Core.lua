@@ -216,7 +216,7 @@ function GUICore:CreateGUI()
 end
 
 --════════════════════════════════════════════════════════════════
--- CREATE HEADER
+-- CREATE HEADER (FIXED VERSION)
 --════════════════════════════════════════════════════════════════
 function GUICore:CreateHeader()
     local Header = Instance.new("Frame", self.Main)
@@ -234,9 +234,11 @@ function GUICore:CreateHeader()
     HeaderLine.BackgroundTransparency = 0.9
     HeaderLine.BorderSizePixel = 0
     
-    -- Title
+    -- ════════════════════════════════════════════════════════════
+    -- FIX: TITLE AUTO-RESIZE BASED ON TEXT LENGTH
+    -- ════════════════════════════════════════════════════════════
     local Title = Instance.new("TextLabel", Header)
-    Title.Size = UDim2.new(1, -100, 1, 0)
+    Title.Size = UDim2.new(1, -150, 1, 0)  -- Dikurangin lebih banyak buat space
     Title.Position = UDim2.fromOffset(20, 0)
     Title.BackgroundTransparency = 1
     Title.Text = self.Config.Title
@@ -244,11 +246,25 @@ function GUICore:CreateHeader()
     Title.TextSize = isMobile and 16 or 14
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.TextTruncate = Enum.TextTruncate.AtEnd  -- Potong text kalau kepanjangan
     
-    -- Version
+    -- ════════════════════════════════════════════════════════════
+    -- FIX: VERSION BADGE AUTO-POSITION BASED ON TITLE WIDTH
+    -- ════════════════════════════════════════════════════════════
+    -- Calculate title text width
+    local TextService = game:GetService("TextService")
+    local titleSize = TextService:GetTextSize(
+        self.Config.Title,
+        Title.TextSize,
+        Title.Font,
+        Vector2.new(1000, 1000)
+    )
+    
     local Version = Instance.new("TextLabel", Header)
     Version.Size = UDim2.fromOffset(60, 20)
-    Version.Position = UDim2.new(0, 100, 0.5, -10)
+    -- Position version badge AFTER title text (with 10px gap)
+    local versionXPos = 20 + titleSize.X + 10
+    Version.Position = UDim2.new(0, versionXPos, 0.5, -10)
     Version.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Version.BackgroundTransparency = 0.95
     Version.Text = self.Config.Version
