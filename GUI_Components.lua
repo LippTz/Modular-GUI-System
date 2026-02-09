@@ -496,7 +496,7 @@ function Components:CreateTextbox(parent, text, placeholder, callback)
 end
 
 --════════════════════════════════════════════════════════════════
--- CREATE DROPDOWN ✨ (FIXED VERSION)
+-- CREATE DROPDOWN ✨ (FIXED VERSION - SMART DIRECTION)
 --════════════════════════════════════════════════════════════════
 function Components:CreateDropdown(parent, text, options, default, callback)
     local Dropdown = Instance.new("Frame")
@@ -542,10 +542,11 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Arrow.TextColor3 = Color3.fromRGB(200, 200, 200)
     
     -- ════════════════════════════════════════════════════════════
-    -- FIX 1: UBAH KE SCROLLINGFRAME (BIAR BISA SCROLL!)
+    -- OPTIONS CONTAINER (SCROLLINGFRAME)
     -- ════════════════════════════════════════════════════════════
     local OptionsContainer = Instance.new("ScrollingFrame", Dropdown)
     OptionsContainer.Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
+    -- Default position (will be adjusted dynamically)
     OptionsContainer.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
     OptionsContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
     OptionsContainer.BorderSizePixel = 0
@@ -607,9 +608,6 @@ function Components:CreateDropdown(parent, text, options, default, callback)
             currentValue = option
             DropdownButton.Text = option
             
-            -- ════════════════════════════════════════════════════════════
-            -- FIX 2: CLOSE DROPDOWN DULU, BARU CALLBACK/NOTIF
-            -- ════════════════════════════════════════════════════════════
             -- Close dropdown IMMEDIATELY
             isOpen = false
             TweenService:Create(Arrow, TweenInfo.new(0.15), {Rotation = 0}):Play()
@@ -617,17 +615,17 @@ function Components:CreateDropdown(parent, text, options, default, callback)
                 Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
             }):Play()
             
-            -- Wait for animation to finish
             task.wait(0.15)
             OptionsContainer.Visible = false
             
-            -- THEN play sound and callback
             if GUICore then GUICore.PlayClickSound() end
             if callback then callback(option) end
         end)
     end
     
-    -- Toggle dropdown
+    -- ════════════════════════════════════════════════════════════
+    -- SMART DROPDOWN DIRECTION (AUTO DETECT UP/DOWN)
+    -- ════════════════════════════════════════════════════════════
     DropdownButton.MouseButton1Click:Connect(function()
         isOpen = not isOpen
         if GUICore then GUICore.PlayClickSound() end
@@ -635,7 +633,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         if isOpen then
             OptionsContainer.Visible = true
             
-            -- Calculate height (max 5 items visible, sisanya scroll)
+            -- Calculate target height
             local itemHeight = isMobile and 28 or 24
             local padding = 2
             local maxVisibleItems = 5
@@ -643,24 +641,56 @@ function Components:CreateDropdown(parent, text, options, default, callback)
             
             local targetHeight
             if totalItems <= maxVisibleItems then
-                -- Show all items (no scroll needed)
                 targetHeight = (itemHeight * totalItems) + (padding * (totalItems - 1))
             else
-                -- Show max 5 items (scroll for rest)
                 targetHeight = (itemHeight * maxVisibleItems) + (padding * (maxVisibleItems - 1))
             end
             
+            -- ════════════════════════════════════════════════════════════
+            -- SMART POSITION: CHECK IF DROPDOWN FITS BELOW OR SHOULD OPEN UP
+            -- ════════════════════════════════════════════════════════════
+            local dropdownAbsolutePos = Dropdown.AbsolutePosition.Y + Dropdown.AbsoluteSize.Y
+            local parentHeight = parent.AbsoluteSize.Y
+            local spaceBelow = parentHeight - dropdownAbsolutePos
+            local spaceAbove = Dropdown.AbsolutePosition.Y
+            
+            local openUpward = false
+            
+            -- Check if dropdown fits below
+            if spaceBelow < targetHeight + 10 then
+                -- Not enough space below, check if better to open upward
+                if spaceAbove > spaceBelow then
+                    openUpward = true
+                end
+            end
+            
+            -- Set position based on direction
+            if openUpward then
+                -- Open UPWARD (dropdown di atas button)
+                OptionsContainer.Position = UDim2.new(1, isMobile and -105 or -95, 0, -(targetHeight + 5))
+                Arrow.Text = "▲"
+            else
+                -- Open DOWNWARD (normal - dropdown di bawah button)
+                OptionsContainer.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
+                Arrow.Text = "▼"
+            end
+            
+            -- Animate open
             TweenService:Create(OptionsContainer, TweenInfo.new(0.2), {
                 Size = UDim2.new(0, isMobile and 100 or 90, 0, targetHeight)
             }):Play()
             TweenService:Create(Arrow, TweenInfo.new(0.2), {Rotation = 180}):Play()
         else
+            -- Animate close
             TweenService:Create(Arrow, TweenInfo.new(0.2), {Rotation = 0}):Play()
             TweenService:Create(OptionsContainer, TweenInfo.new(0.2), {
                 Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
             }):Play()
             task.wait(0.2)
             OptionsContainer.Visible = false
+            
+            -- Reset arrow
+            Arrow.Text = "▼"
         end
     end)
     
