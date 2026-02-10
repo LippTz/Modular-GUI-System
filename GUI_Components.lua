@@ -496,7 +496,7 @@ function Components:CreateTextbox(parent, text, placeholder, callback)
 end
 
 --════════════════════════════════════════════════════════════════
--- CREATE DROPDOWN ✨ (FIXED - SCROLLING INTERACTION)
+-- CREATE DROPDOWN ✨ (FINAL FIX - INSIDE GUI + SMART DIRECTION)
 --════════════════════════════════════════════════════════════════
 function Components:CreateDropdown(parent, text, options, default, callback)
     local Dropdown = Instance.new("Frame")
@@ -504,7 +504,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Dropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
     Dropdown.BorderSizePixel = 0
     Dropdown.Parent = parent
-    Dropdown.ClipsDescendants = false
+    Dropdown.ClipsDescendants = false  -- IMPORTANT!
     Dropdown.ZIndex = 10
     
     Instance.new("UICorner", Dropdown).CornerRadius = UDim.new(0, 6)
@@ -529,6 +529,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     DropdownButton.TextSize = isMobile and 10 or 9
     DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     DropdownButton.AutoButtonColor = false
+    DropdownButton.ZIndex = 11
     
     Instance.new("UICorner", DropdownButton).CornerRadius = UDim.new(0, 4)
     
@@ -540,28 +541,21 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Arrow.Font = Enum.Font.GothamBold
     Arrow.TextSize = 8
     Arrow.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Arrow.ZIndex = 12
     
     -- ════════════════════════════════════════════════════════════
-    -- CREATE SEPARATE SCREENGUI FOR DROPDOWN
+    -- OPTIONS CONTAINER (INSIDE DROPDOWN - NOT SEPARATE GUI!)
     -- ════════════════════════════════════════════════════════════
-    local DropdownGui = Instance.new("ScreenGui")
-    DropdownGui.Name = "DropdownOverlay_" .. tostring(math.random(1000, 9999))
-    DropdownGui.ResetOnSpawn = false
-    DropdownGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    DropdownGui.DisplayOrder = 999
-    DropdownGui.Parent = game.CoreGui
-    
-    -- ════════════════════════════════════════════════════════════
-    -- FIX: REMOVE ZINDEX, USE LAYOUTORDER INSTEAD
-    -- ════════════════════════════════════════════════════════════
-    local OptionsContainer = Instance.new("ScrollingFrame", DropdownGui)
-    OptionsContainer.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
-    OptionsContainer.Position = UDim2.fromOffset(0, 0)
+    local OptionsContainer = Instance.new("ScrollingFrame", Dropdown)
+    OptionsContainer.Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
+    OptionsContainer.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)  -- Default: bawah
     OptionsContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
     OptionsContainer.BorderSizePixel = 0
     OptionsContainer.Visible = false
-    OptionsContainer.Active = true  -- ← PENTING! Buat input work
-    OptionsContainer.ScrollingEnabled = true  -- ← PENTING!
+    OptionsContainer.ClipsDescendants = true
+    OptionsContainer.ZIndex = 100  -- Very high ZIndex!
+    OptionsContainer.Active = true
+    OptionsContainer.ScrollingEnabled = true
     
     -- Scroll settings
     OptionsContainer.ScrollBarThickness = isMobile and 4 or 3
@@ -569,30 +563,28 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     OptionsContainer.ScrollBarImageTransparency = 0.5
     OptionsContainer.CanvasSize = UDim2.fromOffset(0, 0)
     OptionsContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-    OptionsContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y  -- ← AUTO CANVAS SIZE
     
     Instance.new("UICorner", OptionsContainer).CornerRadius = UDim.new(0, 4)
     
     local OptionsStroke = Instance.new("UIStroke", OptionsContainer)
     OptionsStroke.Color = Color3.fromRGB(0, 255, 170)
     OptionsStroke.Thickness = 1
+    OptionsStroke.Transparency = 0
     
     local OptionsList = Instance.new("UIListLayout", OptionsContainer)
     OptionsList.Padding = UDim.new(0, 2)
-    OptionsList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    OptionsList.HorizontalAlignment = Enum.HorizontalAlignment.Left
     
     local currentValue = default or options[1]
     local isOpen = false
     
-    -- ════════════════════════════════════════════════════════════
-    -- FIX: MANUAL CANVAS SIZE UPDATE (BACKUP)
-    -- ════════════════════════════════════════════════════════════
+    -- Update canvas size
     OptionsList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         OptionsContainer.CanvasSize = UDim2.fromOffset(0, OptionsList.AbsoluteContentSize.Y + 4)
     end)
     
     -- ════════════════════════════════════════════════════════════
-    -- CREATE OPTION BUTTONS (FIXED INTERACTION)
+    -- CREATE OPTION BUTTONS (HIGH ZINDEX + ACTIVE!)
     -- ════════════════════════════════════════════════════════════
     for i, option in ipairs(options) do
         local OptionButton = Instance.new("TextButton", OptionsContainer)
@@ -604,12 +596,14 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         OptionButton.Font = Enum.Font.Gotham
         OptionButton.TextSize = isMobile and 10 or 9
         OptionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        OptionButton.TextWrapped = false
+        OptionButton.TextTruncate = Enum.TextTruncate.AtEnd
         OptionButton.AutoButtonColor = false
-        OptionButton.LayoutOrder = i  -- ← Use LayoutOrder instead of ZIndex
         
         -- ════════════════════════════════════════════════════════════
-        -- FIX: ADD ACTIVE & SELECTABLE PROPERTIES
+        -- FIX: HIGH ZINDEX + ACTIVE + SELECTABLE
         -- ════════════════════════════════════════════════════════════
+        OptionButton.ZIndex = 101
         OptionButton.Active = true
         OptionButton.Selectable = true
         
@@ -626,17 +620,17 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         end)
         
         -- ════════════════════════════════════════════════════════════
-        -- FIX: USE BOTH MOUSEBUTTON1CLICK AND ACTIVATED
+        -- MULTI-EVENT CLICK HANDLER
         -- ════════════════════════════════════════════════════════════
         local function SelectOption()
             currentValue = option
             DropdownButton.Text = option
             
-            -- Close dropdown
+            -- Close immediately
             isOpen = false
             TweenService:Create(Arrow, TweenInfo.new(0.15), {Rotation = 0}):Play()
             TweenService:Create(OptionsContainer, TweenInfo.new(0.15), {
-                Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
+                Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
             }):Play()
             
             task.wait(0.15)
@@ -648,16 +642,17 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         end
         
         OptionButton.MouseButton1Click:Connect(SelectOption)
-        OptionButton.Activated:Connect(SelectOption)  -- ← BACKUP EVENT
+        OptionButton.Activated:Connect(SelectOption)
+        
+        -- Mobile touch support
+        OptionButton.TouchTap:Connect(SelectOption)
     end
     
     -- ════════════════════════════════════════════════════════════
-    -- SMART DROPDOWN POSITIONING
+    -- SMART DIRECTION (CHECK SPACE IN PARENT GUI)
     -- ════════════════════════════════════════════════════════════
-    local function UpdateDropdownPosition()
-        local buttonPos = DropdownButton.AbsolutePosition
-        local buttonSize = DropdownButton.AbsoluteSize
-        
+    local function GetSmartDirection()
+        -- Calculate heights
         local itemHeight = isMobile and 28 or 24
         local padding = 2
         local maxVisibleItems = 5
@@ -670,54 +665,80 @@ function Components:CreateDropdown(parent, text, options, default, callback)
             targetHeight = (itemHeight * maxVisibleItems) + (padding * (maxVisibleItems - 1))
         end
         
-        local screenHeight = workspace.CurrentCamera.ViewportSize.Y
-        local spaceBelow = screenHeight - (buttonPos.Y + buttonSize.Y)
-        local spaceAbove = buttonPos.Y
+        -- Get parent ScrollingFrame (TabPage)
+        local parentScrollFrame = parent
         
+        -- Get dropdown position relative to parent
+        local dropdownPosY = Dropdown.AbsolutePosition.Y
+        local dropdownSizeY = Dropdown.AbsoluteSize.Y
+        local parentPosY = parentScrollFrame.AbsolutePosition.Y
+        local parentSizeY = parentScrollFrame.AbsoluteSize.Y
+        
+        -- Calculate space below dropdown (inside parent)
+        local dropdownBottomY = dropdownPosY + dropdownSizeY
+        local parentBottomY = parentPosY + parentSizeY
+        local spaceBelow = parentBottomY - dropdownBottomY
+        
+        -- Calculate space above dropdown (inside parent)
+        local spaceAbove = dropdownPosY - parentPosY
+        
+        -- Decide direction
         local openUpward = false
         
         if spaceBelow < targetHeight + 10 then
+            -- Not enough space below
             if spaceAbove > spaceBelow and spaceAbove > targetHeight + 10 then
+                -- More space above - open upward
                 openUpward = true
+            else
+                -- Both spaces small - limit height to available space
+                if spaceBelow > spaceAbove then
+                    targetHeight = math.min(targetHeight, spaceBelow - 10)
+                else
+                    targetHeight = math.min(targetHeight, spaceAbove - 10)
+                    openUpward = true
+                end
             end
         end
         
-        if openUpward then
-            OptionsContainer.Position = UDim2.fromOffset(
-                buttonPos.X,
-                buttonPos.Y - targetHeight - 5
-            )
-            Arrow.Text = "▲"
-        else
-            OptionsContainer.Position = UDim2.fromOffset(
-                buttonPos.X,
-                buttonPos.Y + buttonSize.Y + 5
-            )
-            Arrow.Text = "▼"
-        end
-        
-        return targetHeight
+        return openUpward, targetHeight
     end
     
-    -- Toggle dropdown
+    -- ════════════════════════════════════════════════════════════
+    -- TOGGLE DROPDOWN
+    -- ════════════════════════════════════════════════════════════
     DropdownButton.MouseButton1Click:Connect(function()
         isOpen = not isOpen
         if GUICore then GUICore.PlayClickSound() end
         
         if isOpen then
-            local targetHeight = UpdateDropdownPosition()
+            -- Get smart direction
+            local openUpward, targetHeight = GetSmartDirection()
+            
+            -- Set position based on direction
+            if openUpward then
+                -- Open UPWARD (dari bawah ke atas)
+                OptionsContainer.Position = UDim2.new(1, isMobile and -105 or -95, 0, -(targetHeight + 5))
+                Arrow.Text = "▲"
+            else
+                -- Open DOWNWARD (normal - dari atas ke bawah)
+                OptionsContainer.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
+                Arrow.Text = "▼"
+            end
             
             OptionsContainer.Visible = true
-            OptionsContainer.Active = true  -- ← RE-ENABLE INTERACTION
+            OptionsContainer.Active = true
             
+            -- Animate open
             TweenService:Create(OptionsContainer, TweenInfo.new(0.2), {
-                Size = UDim2.fromOffset(isMobile and 100 or 90, targetHeight)
+                Size = UDim2.new(0, isMobile and 100 or 90, 0, targetHeight)
             }):Play()
             TweenService:Create(Arrow, TweenInfo.new(0.2), {Rotation = 180}):Play()
         else
+            -- Animate close
             TweenService:Create(Arrow, TweenInfo.new(0.2), {Rotation = 0}):Play()
             TweenService:Create(OptionsContainer, TweenInfo.new(0.2), {
-                Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
+                Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
             }):Play()
             task.wait(0.2)
             OptionsContainer.Visible = false
@@ -726,33 +747,41 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     end)
     
     -- ════════════════════════════════════════════════════════════
-    -- CLICK OUTSIDE TO CLOSE
+    -- CLOSE WHEN CLICKING OUTSIDE
     -- ════════════════════════════════════════════════════════════
     local UserInputService = game:GetService("UserInputService")
     
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    local clickConnection
+    clickConnection = UserInputService.InputBegan:Connect(function(input)
         if not isOpen then return end
         
         if input.UserInputType == Enum.UserInputType.MouseButton1 or 
            input.UserInputType == Enum.UserInputType.Touch then
             
-            local mousePos = UserInputService:GetMouseLocation()
+            task.wait()  -- Wait one frame
+            
+            -- Check if still open (might have been closed by button click)
+            if not isOpen then return end
+            
+            local mouse = UserInputService:GetMouseLocation()
+            
             local buttonPos = DropdownButton.AbsolutePosition
             local buttonSize = DropdownButton.AbsoluteSize
             local optionsPos = OptionsContainer.AbsolutePosition
             local optionsSize = OptionsContainer.AbsoluteSize
             
-            local clickedButton = mousePos.X >= buttonPos.X and mousePos.X <= buttonPos.X + buttonSize.X and
-                                  mousePos.Y >= buttonPos.Y and mousePos.Y <= buttonPos.Y + buttonSize.Y
+            local inButton = mouse.X >= buttonPos.X and mouse.X <= buttonPos.X + buttonSize.X and
+                           mouse.Y >= buttonPos.Y and mouse.Y <= buttonPos.Y + buttonSize.Y
             
-            local clickedOptions = mousePos.X >= optionsPos.X and mousePos.X <= optionsPos.X + optionsSize.X and
-                                   mousePos.Y >= optionsPos.Y and mousePos.Y <= optionsPos.Y + optionsSize.Y
+            local inOptions = mouse.X >= optionsPos.X and mouse.X <= optionsPos.X + optionsSize.X and
+                            mouse.Y >= optionsPos.Y and mouse.Y <= optionsPos.Y + optionsSize.Y
             
-            if not clickedButton and not clickedOptions then
+            if not inButton and not inOptions then
+                -- Clicked outside
                 isOpen = false
                 TweenService:Create(Arrow, TweenInfo.new(0.15), {Rotation = 0}):Play()
                 TweenService:Create(OptionsContainer, TweenInfo.new(0.15), {
-                    Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
+                    Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
                 }):Play()
                 task.wait(0.15)
                 OptionsContainer.Visible = false
@@ -764,7 +793,9 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     -- Cleanup
     Dropdown.AncestryChanged:Connect(function(_, parent)
         if not parent then
-            DropdownGui:Destroy()
+            if clickConnection then
+                clickConnection:Disconnect()
+            end
         end
     end)
     
@@ -775,6 +806,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         end
     end
 end
+
 --════════════════════════════════════════════════════════════════
 -- CREATE COLOR PICKER
 --════════════════════════════════════════════════════════════════
