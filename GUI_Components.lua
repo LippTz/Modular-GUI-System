@@ -496,7 +496,7 @@ function Components:CreateTextbox(parent, text, placeholder, callback)
 end
 
 --════════════════════════════════════════════════════════════════
--- CREATE DROPDOWN ✨ (COMPLETELY NEW - SIMPLE & WORKING!)
+-- CREATE DROPDOWN ✨ (CLEAN & BEAUTIFUL VERSION)
 --════════════════════════════════════════════════════════════════
 function Components:CreateDropdown(parent, text, options, default, callback)
     -- Main Dropdown Frame
@@ -515,7 +515,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Label.Position = UDim2.fromOffset(10, 0)
     Label.BackgroundTransparency = 1
     Label.Text = text
-    Label.Font = Enum.Font.GothamBold
+    Label.Font = Enum.Font.Gotham
     Label.TextSize = isMobile and 11 or 10
     Label.TextColor3 = Color3.new(1, 1, 1)
     Label.TextXAlignment = Enum.TextXAlignment.Left
@@ -526,90 +526,127 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     DropdownButton.Position = UDim2.new(1, isMobile and -105 or -95, 0.5, isMobile and -14 or -12)
     DropdownButton.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
     DropdownButton.BorderSizePixel = 0
-    DropdownButton.Text = "  " .. (default or options[1] or "Select")
-    DropdownButton.Font = Enum.Font.Gotham
-    DropdownButton.TextSize = isMobile and 10 or 9
-    DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    DropdownButton.TextXAlignment = Enum.TextXAlignment.Left
+    DropdownButton.Text = ""
     DropdownButton.AutoButtonColor = false
     
     Instance.new("UICorner", DropdownButton).CornerRadius = UDim.new(0, 4)
     
+    -- Button Text
+    local ButtonText = Instance.new("TextLabel", DropdownButton)
+    ButtonText.Size = UDim2.new(1, -25, 1, 0)
+    ButtonText.Position = UDim2.fromOffset(8, 0)
+    ButtonText.BackgroundTransparency = 1
+    ButtonText.Text = default or options[1] or "Select"
+    ButtonText.Font = Enum.Font.Gotham
+    ButtonText.TextSize = isMobile and 10 or 9
+    ButtonText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ButtonText.TextXAlignment = Enum.TextXAlignment.Left
+    ButtonText.TextTruncate = Enum.TextTruncate.AtEnd
+    
     -- Arrow Icon
     local Arrow = Instance.new("TextLabel", DropdownButton)
     Arrow.Size = UDim2.fromOffset(20, 20)
-    Arrow.Position = UDim2.new(1, -22, 0.5, -10)
+    Arrow.Position = UDim2.new(1, -20, 0.5, -10)
     Arrow.BackgroundTransparency = 1
     Arrow.Text = "▼"
     Arrow.Font = Enum.Font.GothamBold
-    Arrow.TextSize = 10
+    Arrow.TextSize = 8
     Arrow.TextColor3 = Color3.fromRGB(200, 200, 200)
     
     -- ════════════════════════════════════════════════════════════
-    -- OPTIONS LIST (SIMPLE FRAME - NO SCROLLING FIRST)
+    -- OPTIONS CONTAINER (INITIALLY FRAME)
     -- ════════════════════════════════════════════════════════════
-    local OptionsList = Instance.new("Frame", Dropdown)
-    OptionsList.Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
-    OptionsList.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
-    OptionsList.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-    OptionsList.BorderSizePixel = 0
-    OptionsList.Visible = false
-    OptionsList.ClipsDescendants = false
+    local OptionsContainer = Instance.new("Frame", Dropdown)
+    OptionsContainer.Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
+    OptionsContainer.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
+    OptionsContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    OptionsContainer.BorderSizePixel = 0
+    OptionsContainer.Visible = false
+    OptionsContainer.ClipsDescendants = true
     
-    Instance.new("UICorner", OptionsList).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", OptionsContainer).CornerRadius = UDim.new(0, 6)
     
-    local OptionsStroke = Instance.new("UIStroke", OptionsList)
-    OptionsStroke.Color = Color3.fromRGB(0, 255, 170)
-    OptionsStroke.Thickness = 1
+    local ContainerStroke = Instance.new("UIStroke", OptionsContainer)
+    ContainerStroke.Color = Color3.fromRGB(0, 255, 170)
+    ContainerStroke.Thickness = 1.5
+    ContainerStroke.Transparency = 0
+    
+    -- Padding inside container
+    local ContainerPadding = Instance.new("UIPadding", OptionsContainer)
+    ContainerPadding.PaddingTop = UDim.new(0, 4)
+    ContainerPadding.PaddingBottom = UDim.new(0, 4)
+    ContainerPadding.PaddingLeft = UDim.new(0, 4)
+    ContainerPadding.PaddingRight = UDim.new(0, 4)
     
     -- Layout for options
-    local Layout = Instance.new("UIListLayout", OptionsList)
-    Layout.Padding = UDim.new(0, 0)
+    local Layout = Instance.new("UIListLayout", OptionsContainer)
+    Layout.Padding = UDim.new(0, 3)
     Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     
     local currentValue = default or options[1]
     local isOpen = false
     
     -- ════════════════════════════════════════════════════════════
-    -- CREATE OPTION BUTTONS (SUPER SIMPLE!)
+    -- CREATE OPTION BUTTONS (BEAUTIFUL!)
     -- ════════════════════════════════════════════════════════════
     for i, option in ipairs(options) do
-        local OptionBtn = Instance.new("TextButton", OptionsList)
-        OptionBtn.Size = UDim2.new(1, 0, 0, isMobile and 30 or 26)
-        OptionBtn.BackgroundColor3 = i % 2 == 0 and Color3.fromRGB(40, 40, 45) or Color3.fromRGB(35, 35, 40)
+        local OptionBtn = Instance.new("TextButton", OptionsContainer)
+        OptionBtn.Size = UDim2.new(1, -8, 0, isMobile and 26 or 22)
+        OptionBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
         OptionBtn.BorderSizePixel = 0
-        OptionBtn.Text = "  " .. option
-        OptionBtn.Font = Enum.Font.Gotham
-        OptionBtn.TextSize = isMobile and 10 or 9
-        OptionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        OptionBtn.TextXAlignment = Enum.TextXAlignment.Left
+        OptionBtn.Text = ""
         OptionBtn.AutoButtonColor = false
         OptionBtn.LayoutOrder = i
         
+        Instance.new("UICorner", OptionBtn).CornerRadius = UDim.new(0, 4)
+        
+        -- Option Text
+        local OptionText = Instance.new("TextLabel", OptionBtn)
+        OptionText.Size = UDim2.new(1, -12, 1, 0)
+        OptionText.Position = UDim2.fromOffset(6, 0)
+        OptionText.BackgroundTransparency = 1
+        OptionText.Text = option
+        OptionText.Font = Enum.Font.Gotham
+        OptionText.TextSize = isMobile and 10 or 9
+        OptionText.TextColor3 = Color3.fromRGB(220, 220, 220)
+        OptionText.TextXAlignment = Enum.TextXAlignment.Left
+        OptionText.TextTruncate = Enum.TextTruncate.AtEnd
+        
         -- Hover effect
         OptionBtn.MouseEnter:Connect(function()
-            OptionBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 120)
+            TweenService:Create(OptionBtn, TweenInfo.new(0.15), {
+                BackgroundColor3 = Color3.fromRGB(0, 200, 140)
+            }):Play()
+            TweenService:Create(OptionText, TweenInfo.new(0.15), {
+                TextColor3 = Color3.fromRGB(255, 255, 255)
+            }):Play()
         end)
         
         OptionBtn.MouseLeave:Connect(function()
-            OptionBtn.BackgroundColor3 = i % 2 == 0 and Color3.fromRGB(40, 40, 45) or Color3.fromRGB(35, 35, 40)
+            TweenService:Create(OptionBtn, TweenInfo.new(0.15), {
+                BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+            }):Play()
+            TweenService:Create(OptionText, TweenInfo.new(0.15), {
+                TextColor3 = Color3.fromRGB(220, 220, 220)
+            }):Play()
         end)
         
         -- Click to select
         OptionBtn.MouseButton1Click:Connect(function()
             currentValue = option
-            DropdownButton.Text = "  " .. option
+            ButtonText.Text = option
             
             -- Close dropdown
             isOpen = false
             Arrow.Text = "▼"
             
-            TweenService:Create(OptionsList, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            TweenService:Create(OptionsContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
                 Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
             }):Play()
             
             task.wait(0.2)
-            OptionsList.Visible = false
+            OptionsContainer.Visible = false
             
             -- Callback
             if GUICore then GUICore.PlayClickSound() end
@@ -618,100 +655,113 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     end
     
     -- ════════════════════════════════════════════════════════════
-    -- CALCULATE DROPDOWN HEIGHT & DIRECTION
+    -- OPEN DROPDOWN FUNCTION
     -- ════════════════════════════════════════════════════════════
     local function OpenDropdown()
-        local itemHeight = isMobile and 30 or 26
-        local maxItems = 5
+        local itemHeight = isMobile and 26 or 22
+        local itemGap = 3
+        local containerPadding = 8  -- Top + Bottom padding
+        local maxVisibleItems = 5
         local totalItems = #options
         
-        -- Calculate height
-        local visibleItems = math.min(totalItems, maxItems)
-        local totalHeight = visibleItems * itemHeight
+        local visibleItems = math.min(totalItems, maxVisibleItems)
+        local contentHeight = (visibleItems * itemHeight) + ((visibleItems - 1) * itemGap)
+        local totalHeight = contentHeight + containerPadding
         
-        -- Check if we need scrolling
-        if totalItems > maxItems then
-            -- Convert to ScrollingFrame
-            local ScrollList = Instance.new("ScrollingFrame")
-            ScrollList.Size = OptionsList.Size
-            ScrollList.Position = OptionsList.Position
-            ScrollList.BackgroundColor3 = OptionsList.BackgroundColor3
-            ScrollList.BorderSizePixel = 0
-            ScrollList.Visible = false
-            ScrollList.ClipsDescendants = true
-            ScrollList.ScrollBarThickness = 4
-            ScrollList.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
-            ScrollList.CanvasSize = UDim2.new(0, 0, 0, totalItems * itemHeight)
-            ScrollList.Parent = Dropdown
+        -- ════════════════════════════════════════════════════════════
+        -- CONVERT TO SCROLLINGFRAME IF NEEDED
+        -- ════════════════════════════════════════════════════════════
+        if totalItems > maxVisibleItems and OptionsContainer.ClassName ~= "ScrollingFrame" then
+            local ScrollContainer = Instance.new("ScrollingFrame")
+            ScrollContainer.Size = OptionsContainer.Size
+            ScrollContainer.Position = OptionsContainer.Position
+            ScrollContainer.BackgroundColor3 = OptionsContainer.BackgroundColor3
+            ScrollContainer.BorderSizePixel = 0
+            ScrollContainer.Visible = false
+            ScrollContainer.ClipsDescendants = true
+            ScrollContainer.Parent = Dropdown
             
-            Instance.new("UICorner", ScrollList).CornerRadius = UDim.new(0, 4)
+            -- Scroll properties
+            ScrollContainer.ScrollBarThickness = 3
+            ScrollContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
+            ScrollContainer.ScrollBarImageTransparency = 0.3
+            ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, (totalItems * itemHeight) + ((totalItems - 1) * itemGap) + containerPadding)
+            ScrollContainer.ScrollingDirection = Enum.ScrollingDirection.Y
             
-            local ScrollStroke = Instance.new("UIStroke", ScrollList)
+            -- Copy corner and stroke
+            Instance.new("UICorner", ScrollContainer).CornerRadius = UDim.new(0, 6)
+            
+            local ScrollStroke = Instance.new("UIStroke", ScrollContainer)
             ScrollStroke.Color = Color3.fromRGB(0, 255, 170)
-            ScrollStroke.Thickness = 1
+            ScrollStroke.Thickness = 1.5
             
-            -- Move all options to ScrollingFrame
-            for _, child in ipairs(OptionsList:GetChildren()) do
-                if child:IsA("TextButton") then
-                    child.Parent = ScrollList
-                end
+            -- Copy padding
+            local ScrollPadding = Instance.new("UIPadding", ScrollContainer)
+            ScrollPadding.PaddingTop = UDim.new(0, 4)
+            ScrollPadding.PaddingBottom = UDim.new(0, 4)
+            ScrollPadding.PaddingLeft = UDim.new(0, 4)
+            ScrollPadding.PaddingRight = UDim.new(0, 7)  -- Extra for scrollbar
+            
+            -- Move all children
+            for _, child in ipairs(OptionsContainer:GetChildren()) do
+                child.Parent = ScrollContainer
             end
             
-            -- Move layout
-            Layout.Parent = ScrollList
-            
-            -- Destroy old frame
-            OptionsList:Destroy()
-            OptionsList = ScrollList
+            -- Destroy old container
+            OptionsContainer:Destroy()
+            OptionsContainer = ScrollContainer
         end
         
         -- ════════════════════════════════════════════════════════════
-        -- SMART DIRECTION (UP or DOWN)
+        -- SMART DIRECTION (UP OR DOWN)
         -- ════════════════════════════════════════════════════════════
         local dropdownY = Dropdown.AbsolutePosition.Y
         local dropdownHeight = Dropdown.AbsoluteSize.Y
-        local parentHeight = parent.AbsoluteSize.Y
         local parentY = parent.AbsolutePosition.Y
+        local parentHeight = parent.AbsoluteSize.Y
         
         local spaceBelow = (parentY + parentHeight) - (dropdownY + dropdownHeight)
         local spaceAbove = dropdownY - parentY
         
-        local openUp = false
+        local openUpward = false
         
-        -- Check if should open upward
         if spaceBelow < totalHeight + 10 then
             if spaceAbove > spaceBelow then
-                openUp = true
+                openUpward = true
             end
         end
         
         -- Set position
-        if openUp then
-            OptionsList.Position = UDim2.new(1, isMobile and -105 or -95, 0, -(totalHeight + 5))
+        if openUpward then
+            OptionsContainer.Position = UDim2.new(1, isMobile and -105 or -95, 0, -(totalHeight + 5))
             Arrow.Text = "▲"
         else
-            OptionsList.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
+            OptionsContainer.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
             Arrow.Text = "▼"
         end
         
-        -- Show and animate
-        OptionsList.Visible = true
-        TweenService:Create(OptionsList, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+        -- Animate open
+        OptionsContainer.Visible = true
+        TweenService:Create(OptionsContainer, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             Size = UDim2.new(0, isMobile and 100 or 90, 0, totalHeight)
         }):Play()
         
-        TweenService:Create(Arrow, TweenInfo.new(0.2), {Rotation = 180}):Play()
+        TweenService:Create(Arrow, TweenInfo.new(0.25), {Rotation = 180}):Play()
     end
     
+    -- ════════════════════════════════════════════════════════════
+    -- CLOSE DROPDOWN FUNCTION
+    -- ════════════════════════════════════════════════════════════
     local function CloseDropdown()
         Arrow.Text = "▼"
+        
         TweenService:Create(Arrow, TweenInfo.new(0.2), {Rotation = 0}):Play()
-        TweenService:Create(OptionsList, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+        TweenService:Create(OptionsContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
             Size = UDim2.new(0, isMobile and 100 or 90, 0, 0)
         }):Play()
         
         task.wait(0.2)
-        OptionsList.Visible = false
+        OptionsContainer.Visible = false
     end
     
     -- ════════════════════════════════════════════════════════════
@@ -736,26 +786,23 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     
     UserInputService.InputBegan:Connect(function(input)
         if not isOpen then return end
-        if not OptionsList.Visible then return end
+        if not OptionsContainer.Visible then return end
         
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             task.wait()
             
             local mouse = UserInputService:GetMouseLocation()
             
-            -- Check button bounds
             local btnPos = DropdownButton.AbsolutePosition
             local btnSize = DropdownButton.AbsoluteSize
             local inButton = mouse.X >= btnPos.X and mouse.X <= btnPos.X + btnSize.X and
                            mouse.Y >= btnPos.Y and mouse.Y <= btnPos.Y + btnSize.Y
             
-            -- Check options bounds
-            local optPos = OptionsList.AbsolutePosition
-            local optSize = OptionsList.AbsoluteSize
+            local optPos = OptionsContainer.AbsolutePosition
+            local optSize = OptionsContainer.AbsoluteSize
             local inOptions = mouse.X >= optPos.X and mouse.X <= optPos.X + optSize.X and
                             mouse.Y >= optPos.Y and mouse.Y <= optPos.Y + optSize.Y
             
-            -- Close if clicked outside
             if not inButton and not inOptions then
                 isOpen = false
                 CloseDropdown()
@@ -766,7 +813,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     return Dropdown, function() return currentValue end, function(newValue)
         if table.find(options, newValue) then
             currentValue = newValue
-            DropdownButton.Text = "  " .. newValue
+            ButtonText.Text = newValue
         end
     end
 end
