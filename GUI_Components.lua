@@ -496,9 +496,12 @@ function Components:CreateTextbox(parent, text, placeholder, callback)
 end
 
 --════════════════════════════════════════════════════════════════
--- CREATE DROPDOWN ✨ (STABLE FIX - NO CHILD MOVING)
+-- CREATE DROPDOWN ✨ (PROPER FIX - FOLLOW GUI + ANIMATION)
 --════════════════════════════════════════════════════════════════
 function Components:CreateDropdown(parent, text, options, default, callback)
+
+    local TweenService = game:GetService("TweenService")
+    local UIS = game:GetService("UserInputService")
 
     -- Container
     local Container = Instance.new("Frame")
@@ -506,6 +509,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Container.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
     Container.BorderSizePixel = 0
     Container.Parent = parent
+    Container.ZIndex = 5
     Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 6)
 
     -- Label
@@ -518,6 +522,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Label.TextSize = isMobile and 11 or 10
     Label.TextColor3 = Color3.new(1,1,1)
     Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.ZIndex = 6
 
     -- Button
     local Button = Instance.new("TextButton", Container)
@@ -526,9 +531,10 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Button.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
     Button.Text = ""
     Button.AutoButtonColor = false
+    Button.ZIndex = 6
     Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 4)
 
-    -- Value text
+    -- Value
     local Value = Instance.new("TextLabel", Button)
     Value.Size = UDim2.new(1, -22, 1, 0)
     Value.Position = UDim2.fromOffset(6, 0)
@@ -539,6 +545,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Value.TextColor3 = Color3.new(1,1,1)
     Value.TextXAlignment = Enum.TextXAlignment.Left
     Value.TextTruncate = Enum.TextTruncate.AtEnd
+    Value.ZIndex = 7
 
     -- Arrow
     local Arrow = Instance.new("TextLabel", Button)
@@ -549,37 +556,22 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Arrow.Font = Enum.Font.GothamBold
     Arrow.TextSize = 7
     Arrow.TextColor3 = Color3.fromRGB(180,180,180)
+    Arrow.ZIndex = 7
 
-    -- ScreenGui
-    local ListGui = Instance.new("ScreenGui")
-    ListGui.Name = "Dropdown_"..math.random(1000,9999)
-    ListGui.ResetOnSpawn = false
-    ListGui.DisplayOrder = 999
-    ListGui.Parent = game.CoreGui
-
-    -- ScrollingFrame (langsung dari awal)
-    local List = Instance.new("ScrollingFrame")
-    List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
-    List.CanvasSize = UDim2.new(0,0,0,0)
-    List.ScrollBarThickness = 3
-    List.ScrollBarImageColor3 = Color3.fromRGB(0,255,170)
+    -- Dropdown List (di dalam container, bukan ScreenGui)
+    local List = Instance.new("Frame", Container)
+    List.Position = UDim2.new(0, 0, 1, 4)
+    List.Size = UDim2.new(1, 0, 0, 0)
     List.BackgroundColor3 = Color3.fromRGB(35,35,40)
     List.BorderSizePixel = 0
-    List.Visible = false
     List.ClipsDescendants = true
-    List.Parent = ListGui
-
+    List.Visible = false
+    List.ZIndex = 10
     Instance.new("UICorner", List).CornerRadius = UDim.new(0,6)
 
     local Stroke = Instance.new("UIStroke", List)
     Stroke.Color = Color3.fromRGB(0,255,170)
     Stroke.Thickness = 1.5
-
-    local Padding = Instance.new("UIPadding", List)
-    Padding.PaddingTop = UDim.new(0,4)
-    Padding.PaddingBottom = UDim.new(0,4)
-    Padding.PaddingLeft = UDim.new(0,4)
-    Padding.PaddingRight = UDim.new(0,4)
 
     local Layout = Instance.new("UIListLayout", List)
     Layout.Padding = UDim.new(0,2)
@@ -587,79 +579,80 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     local open = false
     local current = default or options[1]
 
-    -- Update canvas otomatis
-    Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        List.CanvasSize = UDim2.fromOffset(0, Layout.AbsoluteContentSize.Y + 8)
-    end)
+    -- Auto canvas height
+    local function getHeight()
+        return Layout.AbsoluteContentSize.Y + 6
+    end
 
     -- Create options
     for _,opt in ipairs(options) do
         local Opt = Instance.new("TextButton")
-        Opt.Size = UDim2.new(1, -8, 0, isMobile and 24 or 20)
+        Opt.Size = UDim2.new(1, -6, 0, isMobile and 24 or 20)
         Opt.BackgroundColor3 = Color3.fromRGB(45,45,50)
-        Opt.Text = ""
+        Opt.Text = opt
+        Opt.Font = Enum.Font.Gotham
+        Opt.TextSize = isMobile and 9 or 8
+        Opt.TextColor3 = Color3.fromRGB(200,200,200)
         Opt.AutoButtonColor = false
+        Opt.ZIndex = 11
         Opt.Parent = List
         Instance.new("UICorner", Opt).CornerRadius = UDim.new(0,4)
-
-        local T = Instance.new("TextLabel", Opt)
-        T.Size = UDim2.new(1,-6,1,0)
-        T.Position = UDim2.fromOffset(3,0)
-        T.BackgroundTransparency = 1
-        T.Text = opt
-        T.Font = Enum.Font.Gotham
-        T.TextSize = isMobile and 9 or 8
-        T.TextColor3 = Color3.fromRGB(200,200,200)
-        T.TextXAlignment = Enum.TextXAlignment.Left
 
         Opt.MouseButton1Click:Connect(function()
             current = opt
             Value.Text = opt
-            open = false
-            List.Visible = false
-            List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
-            Arrow.Text = "▼"
             if callback then callback(opt) end
+            Button:Activate()
         end)
     end
 
-    -- Toggle dropdown
+    -- Close function
+    local function closeDropdown()
+        open = false
+        Arrow.Text = "▼"
+
+        TweenService:Create(List, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            Size = UDim2.new(1,0,0,0)
+        }):Play()
+
+        task.wait(0.2)
+        if not open then
+            List.Visible = false
+        end
+    end
+
+    -- Toggle
     Button.MouseButton1Click:Connect(function()
         open = not open
 
+        if GUICore then GUICore.PlayClickSound() end
+
         if open then
-            task.wait()
-
-            local contentHeight = Layout.AbsoluteContentSize.Y + 8
-            local itemHeight = (isMobile and 24 or 20)
-            local maxHeight = itemHeight * 5 + 8
-            local finalHeight = math.min(contentHeight, maxHeight)
-
-            local btnPos = Button.AbsolutePosition
-            local btnSize = Button.AbsoluteSize
-            local screenHeight = workspace.CurrentCamera.ViewportSize.Y
-
-            if screenHeight - (btnPos.Y + btnSize.Y) >= finalHeight + 10 then
-                List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
-                Arrow.Text = "▼"
-            else
-                List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y - finalHeight - 5)
-                Arrow.Text = "▲"
-            end
-
-            List.Size = UDim2.fromOffset(isMobile and 100 or 90, finalHeight)
             List.Visible = true
+            Arrow.Text = "▲"
+
+            local height = math.min(getHeight(), (isMobile and 24 or 20) * 5)
+
+            TweenService:Create(List, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+                Size = UDim2.new(1,0,0,height)
+            }):Play()
         else
-            List.Visible = false
-            List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
-            Arrow.Text = "▼"
+            closeDropdown()
         end
     end)
 
-    -- Cleanup
-    Container.AncestryChanged:Connect(function(_,p)
-        if not p then
-            ListGui:Destroy()
+    -- Close when clicking outside
+    UIS.InputBegan:Connect(function(input)
+        if not open then return end
+        if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+
+        local mousePos = UIS:GetMouseLocation()
+        local absPos = List.AbsolutePosition
+        local absSize = List.AbsoluteSize
+
+        if not (mousePos.X >= absPos.X and mousePos.X <= absPos.X + absSize.X
+            and mousePos.Y >= absPos.Y and mousePos.Y <= absPos.Y + absSize.Y) then
+            closeDropdown()
         end
     end)
 
