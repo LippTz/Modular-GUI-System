@@ -634,65 +634,83 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         open = not open
         if GUICore then GUICore.PlayClickSound() end
         
-        if open then
-            local h = math.min(#options, 5) * (isMobile and 24 or 20) + (#options - 1) * 2 + 8
-            
-            -- 🔥 POSISI ABSOLUTE BERDASARKAN BUTTON
-            local btnPos = Button.AbsolutePosition
-            local btnSize = Button.AbsoluteSize
-            local screenHeight = workspace.CurrentCamera.ViewportSize.Y
-            
-            local spaceBelow = screenHeight - (btnPos.Y + btnSize.Y)
-            local spaceAbove = btnPos.Y
-            
-            if spaceBelow >= h + 10 then
-                -- Open DOWN
-                List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
-                Arrow.Text = "▼"
-            elseif spaceAbove >= h + 10 then
-                -- Open UP
-                List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y - h - 5)
-                Arrow.Text = "▲"
-            else
-                -- Default down
-                List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
-                Arrow.Text = "▼"
-            end
-            
-            List.Visible = true
-            List.Size = UDim2.fromOffset(isMobile and 100 or 90, h)
-            
-            -- Scroll if needed
-            if #options > 5 and List.ClassName ~= "ScrollingFrame" then
-                local S = Instance.new("ScrollingFrame")
-                S.Size = List.Size
-                S.Position = List.Position
-                S.BackgroundColor3 = List.BackgroundColor3
-                S.Visible = true
-                S.ClipsDescendants = true
-                S.ScrollBarThickness = 3
-                S.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
-                S.CanvasSize = UDim2.fromOffset(0, #options * (isMobile and 24 or 20) + (#options - 1) * 2 + 8)
-                S.Parent = ListGui
-                
-                Instance.new("UICorner", S).CornerRadius = UDim.new(0, 6)
-                local SS = Instance.new("UIStroke", S)
-                SS.Color = Color3.fromRGB(0, 255, 170)
-                SS.Thickness = 1.5
-                
-                local P = Instance.new("UIPadding", S)
-                P.PaddingTop = UDim.new(0, 4)
-                P.PaddingBottom = UDim.new(0, 4)
-                P.PaddingLeft = UDim.new(0, 4)
-                P.PaddingRight = UDim.new(0, 7)
-                
-                for _, c in ipairs(List:GetChildren()) do
+       if open then
+    -- Hitung tinggi asli berdasarkan content
+    task.wait() -- pastikan AbsoluteContentSize update
+    local contentHeight = ListLayout.AbsoluteContentSize.Y + 8
+    local itemHeight = (isMobile and 24 or 20)
+    local maxVisibleHeight = itemHeight * 5 + 8
+    local finalHeight = math.min(contentHeight, maxVisibleHeight)
+
+    -- 🔥 POSISI ABSOLUTE BERDASARKAN BUTTON
+    local btnPos = Button.AbsolutePosition
+    local btnSize = Button.AbsoluteSize
+    local screenHeight = workspace.CurrentCamera.ViewportSize.Y
+
+    local spaceBelow = screenHeight - (btnPos.Y + btnSize.Y)
+    local spaceAbove = btnPos.Y
+
+    if spaceBelow >= finalHeight + 10 then
+        List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
+        Arrow.Text = "▼"
+    elseif spaceAbove >= finalHeight + 10 then
+        List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y - finalHeight - 5)
+        Arrow.Text = "▲"
+    else
+        List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
+        Arrow.Text = "▼"
+    end
+
+    List.Visible = true
+
+    -- 🔥 AUTO SCROLL JIKA PERLU
+    if contentHeight > maxVisibleHeight then
+        if not List:IsA("ScrollingFrame") then
+            local oldList = List
+
+            local S = Instance.new("ScrollingFrame")
+            S.Size = UDim2.fromOffset(isMobile and 100 or 90, finalHeight)
+            S.Position = oldList.Position
+            S.BackgroundColor3 = oldList.BackgroundColor3
+            S.BorderSizePixel = 0
+            S.ScrollBarThickness = 3
+            S.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
+            S.CanvasSize = UDim2.fromOffset(0, contentHeight)
+            S.Visible = true
+            S.ClipsDescendants = true
+            S.Parent = ListGui
+
+            Instance.new("UICorner", S).CornerRadius = UDim.new(0, 6)
+
+            local SS = Instance.new("UIStroke", S)
+            SS.Color = Color3.fromRGB(0, 255, 170)
+            SS.Thickness = 1.5
+
+            local P = Instance.new("UIPadding", S)
+            P.PaddingTop = UDim.new(0, 4)
+            P.PaddingBottom = UDim.new(0, 4)
+            P.PaddingLeft = UDim.new(0, 4)
+            P.PaddingRight = UDim.new(0, 7)
+
+            for _, c in ipairs(oldList:GetChildren()) do
+                if not c:IsA("UICorner") and
+                   not c:IsA("UIStroke") and
+                   not c:IsA("UIPadding") and
+                   not c:IsA("UIListLayout") then
                     c.Parent = S
                 end
-                
-                List:Destroy()
-                List = S
             end
+
+            List = S
+            oldList:Destroy()
+        else
+            List.Size = UDim2.fromOffset(isMobile and 100 or 90, finalHeight)
+            List.CanvasSize = UDim2.fromOffset(0, contentHeight)
+        end
+    else
+        List.Size = UDim2.fromOffset(isMobile and 100 or 90, contentHeight)
+    end
+
         else
             List.Visible = false
             List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
