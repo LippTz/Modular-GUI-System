@@ -496,7 +496,7 @@ function Components:CreateTextbox(parent, text, placeholder, callback)
 end
 
 --════════════════════════════════════════════════════════════════
--- CREATE DROPDOWN ✨ (COMPLETELY NEW - CLEAN CODE!)
+-- CREATE DROPDOWN ✨ (FINAL FIX - SEPARATE SCREENGUI!)
 --════════════════════════════════════════════════════════════════
 function Components:CreateDropdown(parent, text, options, default, callback)
     -- Container
@@ -519,7 +519,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Label.TextColor3 = Color3.new(1, 1, 1)
     Label.TextXAlignment = Enum.TextXAlignment.Left
     
-    -- Button Frame
+    -- Button
     local Button = Instance.new("TextButton", Container)
     Button.Size = UDim2.fromOffset(isMobile and 100 or 90, isMobile and 28 or 24)
     Button.Position = UDim2.new(1, isMobile and -105 or -95, 0.5, isMobile and -14 or -12)
@@ -529,7 +529,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     
     Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 4)
     
-    -- Selected Value
+    -- Value
     local Value = Instance.new("TextLabel", Button)
     Value.Size = UDim2.new(1, -22, 1, 0)
     Value.Position = UDim2.fromOffset(6, 0)
@@ -551,8 +551,16 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Arrow.TextSize = 7
     Arrow.TextColor3 = Color3.fromRGB(180, 180, 180)
     
-    -- Dropdown List
-    local List = Instance.new("Frame", Container)
+    -- ════════════════════════════════════════════════════════════
+    -- 🔥 LIST DI SCREENGUI TERPISAH (GA KETUTUP!)
+    -- ════════════════════════════════════════════════════════════
+    local ListGui = Instance.new("ScreenGui")
+    ListGui.Name = "DropdownList_" .. tostring(math.random(1000, 9999))
+    ListGui.ResetOnSpawn = false
+    ListGui.DisplayOrder = 999
+    ListGui.Parent = game.CoreGui
+    
+    local List = Instance.new("Frame", ListGui)
     List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
     List.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
     List.BorderSizePixel = 0
@@ -629,22 +637,25 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         if open then
             local h = math.min(#options, 5) * (isMobile and 24 or 20) + (#options - 1) * 2 + 8
             
-            -- Check space
-            local cY = Container.AbsolutePosition.Y
-            local cH = Container.AbsoluteSize.Y
-            local pY = parent.AbsolutePosition.Y
-            local pH = parent.AbsoluteSize.Y
-            local below = (pY + pH) - (cY + cH)
-            local above = cY - pY
+            -- 🔥 POSISI ABSOLUTE BERDASARKAN BUTTON
+            local btnPos = Button.AbsolutePosition
+            local btnSize = Button.AbsoluteSize
+            local screenHeight = workspace.CurrentCamera.ViewportSize.Y
             
-            if below >= h + 10 then
-                List.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
+            local spaceBelow = screenHeight - (btnPos.Y + btnSize.Y)
+            local spaceAbove = btnPos.Y
+            
+            if spaceBelow >= h + 10 then
+                -- Open DOWN
+                List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
                 Arrow.Text = "▼"
-            elseif above >= h + 10 then
-                List.Position = UDim2.new(1, isMobile and -105 or -95, 0, -(h + 5))
+            elseif spaceAbove >= h + 10 then
+                // Open UP
+                List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y - h - 5)
                 Arrow.Text = "▲"
             else
-                List.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
+                // Default down
+                List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
                 Arrow.Text = "▼"
             end
             
@@ -662,11 +673,12 @@ function Components:CreateDropdown(parent, text, options, default, callback)
                 S.ScrollBarThickness = 3
                 S.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
                 S.CanvasSize = UDim2.fromOffset(0, #options * (isMobile and 24 or 20) + (#options - 1) * 2 + 8)
-                S.Parent = Container
+                S.Parent = ListGui
                 
                 Instance.new("UICorner", S).CornerRadius = UDim.new(0, 6)
-                Instance.new("UIStroke", S).Color = Color3.fromRGB(0, 255, 170)
-                Instance.new("UIStroke", S).Thickness = 1.5
+                local SS = Instance.new("UIStroke", S)
+                SS.Color = Color3.fromRGB(0, 255, 170)
+                SS.Thickness = 1.5
                 
                 local P = Instance.new("UIPadding", S)
                 P.PaddingTop = UDim.new(0, 4)
@@ -703,6 +715,13 @@ function Components:CreateDropdown(parent, text, options, default, callback)
             List.Visible = false
             List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
             Arrow.Text = "▼"
+        end
+    end)
+    
+    -- Cleanup
+    Container.AncestryChanged:Connect(function(_, p)
+        if not p then
+            ListGui:Destroy()
         end
     end)
     
