@@ -496,338 +496,222 @@ function Components:CreateTextbox(parent, text, placeholder, callback)
 end
 
 --════════════════════════════════════════════════════════════════
--- CREATE DROPDOWN ✨ (FIXED - HIGHEST ZINDEX!)
+-- CREATE DROPDOWN ✨ (COMPLETELY NEW - CLEAN CODE!)
 --════════════════════════════════════════════════════════════════
 function Components:CreateDropdown(parent, text, options, default, callback)
-    -- ════════════════════════════════════════════════════════════
-    -- MAIN DROPDOWN CONTAINER
-    -- ════════════════════════════════════════════════════════════
-    local DropdownContainer = Instance.new("Frame")
-    DropdownContainer.Size = UDim2.new(1, 0, 0, isMobile and 40 or 32)
-    DropdownContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-    DropdownContainer.BorderSizePixel = 0
-    DropdownContainer.ClipsDescendants = false  -- CRITICAL!
-    DropdownContainer.Parent = parent
-    DropdownContainer.ZIndex = 1
+    -- Container
+    local Container = Instance.new("Frame")
+    Container.Size = UDim2.new(1, 0, 0, isMobile and 40 or 32)
+    Container.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    Container.BorderSizePixel = 0
+    Container.Parent = parent
     
-    Instance.new("UICorner", DropdownContainer).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 6)
     
-    -- ════════════════════════════════════════════════════════════
-    -- LABEL
-    -- ════════════════════════════════════════════════════════════
-    local Label = Instance.new("TextLabel", DropdownContainer)
+    -- Label
+    local Label = Instance.new("TextLabel", Container)
     Label.Size = UDim2.new(1, -110, 1, 0)
     Label.Position = UDim2.fromOffset(10, 0)
     Label.BackgroundTransparency = 1
     Label.Text = text
     Label.Font = Enum.Font.Gotham
     Label.TextSize = isMobile and 11 or 10
-    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Label.TextColor3 = Color3.new(1, 1, 1)
     Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.ZIndex = 2
     
-    -- ════════════════════════════════════════════════════════════
-    -- DROPDOWN BUTTON
-    -- ════════════════════════════════════════════════════════════
-    local DropButton = Instance.new("TextButton", DropdownContainer)
-    DropButton.Size = UDim2.fromOffset(isMobile and 100 or 90, isMobile and 28 or 24)
-    DropButton.Position = UDim2.new(1, isMobile and -105 or -95, 0.5, isMobile and -14 or -12)
-    DropButton.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-    DropButton.BorderSizePixel = 0
-    DropButton.AutoButtonColor = false
-    DropButton.Text = ""
-    DropButton.ZIndex = 2
+    -- Button Frame
+    local Button = Instance.new("TextButton", Container)
+    Button.Size = UDim2.fromOffset(isMobile and 100 or 90, isMobile and 28 or 24)
+    Button.Position = UDim2.new(1, isMobile and -105 or -95, 0.5, isMobile and -14 or -12)
+    Button.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    Button.Text = ""
+    Button.AutoButtonColor = false
     
-    Instance.new("UICorner", DropButton).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 4)
     
-    -- Current value text
-    local ValueText = Instance.new("TextLabel", DropButton)
-    ValueText.Size = UDim2.new(1, -24, 1, 0)
-    ValueText.Position = UDim2.fromOffset(8, 0)
-    ValueText.BackgroundTransparency = 1
-    ValueText.Text = default or options[1] or "..."
-    ValueText.Font = Enum.Font.Gotham
-    ValueText.TextSize = isMobile and 10 or 9
-    ValueText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ValueText.TextXAlignment = Enum.TextXAlignment.Left
-    ValueText.TextTruncate = Enum.TextTruncate.AtEnd
-    ValueText.ZIndex = 3
+    -- Selected Value
+    local Value = Instance.new("TextLabel", Button)
+    Value.Size = UDim2.new(1, -22, 1, 0)
+    Value.Position = UDim2.fromOffset(6, 0)
+    Value.BackgroundTransparency = 1
+    Value.Text = default or options[1] or "..."
+    Value.Font = Enum.Font.Gotham
+    Value.TextSize = isMobile and 10 or 9
+    Value.TextColor3 = Color3.new(1, 1, 1)
+    Value.TextXAlignment = Enum.TextXAlignment.Left
+    Value.TextTruncate = Enum.TextTruncate.AtEnd
     
     -- Arrow
-    local Arrow = Instance.new("TextLabel", DropButton)
-    Arrow.Size = UDim2.fromOffset(16, 16)
-    Arrow.Position = UDim2.new(1, -18, 0.5, -8)
+    local Arrow = Instance.new("TextLabel", Button)
+    Arrow.Size = UDim2.fromOffset(14, 14)
+    Arrow.Position = UDim2.new(1, -16, 0.5, -7)
     Arrow.BackgroundTransparency = 1
     Arrow.Text = "▼"
     Arrow.Font = Enum.Font.GothamBold
-    Arrow.TextSize = 8
+    Arrow.TextSize = 7
     Arrow.TextColor3 = Color3.fromRGB(180, 180, 180)
-    Arrow.ZIndex = 3
     
-    -- ════════════════════════════════════════════════════════════
-    -- OPTIONS MENU (SUPER HIGH ZINDEX!) 🔥🔥🔥
-    -- ════════════════════════════════════════════════════════════
-    local OptionsMenu = Instance.new("Frame", DropdownContainer)
-    OptionsMenu.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
-    OptionsMenu.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
-    OptionsMenu.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-    OptionsMenu.BorderSizePixel = 0
-    OptionsMenu.Visible = false
-    OptionsMenu.ClipsDescendants = true
-    OptionsMenu.ZIndex = 9999  -- 🔥 SUPER HIGH ZINDEX!
+    -- Dropdown List
+    local List = Instance.new("Frame", Container)
+    List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
+    List.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    List.BorderSizePixel = 0
+    List.Visible = false
+    List.ClipsDescendants = true
     
-    Instance.new("UICorner", OptionsMenu).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", List).CornerRadius = UDim.new(0, 6)
     
-    local MenuStroke = Instance.new("UIStroke", OptionsMenu)
-    MenuStroke.Color = Color3.fromRGB(0, 255, 170)
-    MenuStroke.Thickness = 1.5
+    local Stroke = Instance.new("UIStroke", List)
+    Stroke.Color = Color3.fromRGB(0, 255, 170)
+    Stroke.Thickness = 1.5
     
-    local MenuPadding = Instance.new("UIPadding", OptionsMenu)
-    MenuPadding.PaddingTop = UDim.new(0, 4)
-    MenuPadding.PaddingBottom = UDim.new(0, 4)
-    MenuPadding.PaddingLeft = UDim.new(0, 4)
-    MenuPadding.PaddingRight = UDim.new(0, 4)
+    local Padding = Instance.new("UIPadding", List)
+    Padding.PaddingTop = UDim.new(0, 4)
+    Padding.PaddingBottom = UDim.new(0, 4)
+    Padding.PaddingLeft = UDim.new(0, 4)
+    Padding.PaddingRight = UDim.new(0, 4)
     
-    local OptionsLayout = Instance.new("UIListLayout", OptionsMenu)
-    OptionsLayout.Padding = UDim.new(0, 2)
-    OptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    local ListLayout = Instance.new("UIListLayout", List)
+    ListLayout.Padding = UDim.new(0, 2)
     
-    -- ════════════════════════════════════════════════════════════
-    -- STATE
-    -- ════════════════════════════════════════════════════════════
-    local isOpen = false
-    local currentValue = default or options[1]
+    -- State
+    local open = false
+    local current = default or options[1]
     
-    -- ════════════════════════════════════════════════════════════
-    -- CREATE OPTIONS (HIGH ZINDEX!)
-    -- ════════════════════════════════════════════════════════════
-    local optionButtons = {}
-    
-    for i, optionText in ipairs(options) do
-        local OptionButton = Instance.new("TextButton", OptionsMenu)
-        OptionButton.Size = UDim2.new(1, -8, 0, isMobile and 24 or 20)
-        OptionButton.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-        OptionButton.BorderSizePixel = 0
-        OptionButton.AutoButtonColor = false
-        OptionButton.Text = ""
-        OptionButton.LayoutOrder = i
-        OptionButton.ZIndex = 10000  -- 🔥 EVEN HIGHER!
+    -- Create Options
+    for _, opt in ipairs(options) do
+        local Opt = Instance.new("TextButton", List)
+        Opt.Size = UDim2.new(1, -8, 0, isMobile and 24 or 20)
+        Opt.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+        Opt.Text = ""
+        Opt.AutoButtonColor = false
         
-        Instance.new("UICorner", OptionButton).CornerRadius = UDim.new(0, 4)
+        Instance.new("UICorner", Opt).CornerRadius = UDim.new(0, 4)
         
-        local OptionLabel = Instance.new("TextLabel", OptionButton)
-        OptionLabel.Size = UDim2.new(1, -8, 1, 0)
-        OptionLabel.Position = UDim2.fromOffset(4, 0)
-        OptionLabel.BackgroundTransparency = 1
-        OptionLabel.Text = optionText
-        OptionLabel.Font = Enum.Font.Gotham
-        OptionLabel.TextSize = isMobile and 9 or 8
-        OptionLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-        OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
-        OptionLabel.TextTruncate = Enum.TextTruncate.AtEnd
-        OptionLabel.ZIndex = 10001  -- 🔥 HIGHEST!
+        local OptText = Instance.new("TextLabel", Opt)
+        OptText.Size = UDim2.new(1, -6, 1, 0)
+        OptText.Position = UDim2.fromOffset(3, 0)
+        OptText.BackgroundTransparency = 1
+        OptText.Text = opt
+        OptText.Font = Enum.Font.Gotham
+        OptText.TextSize = isMobile and 9 or 8
+        OptText.TextColor3 = Color3.fromRGB(200, 200, 200)
+        OptText.TextXAlignment = Enum.TextXAlignment.Left
+        OptText.TextTruncate = Enum.TextTruncate.AtEnd
         
-        -- Hover
-        OptionButton.MouseEnter:Connect(function()
-            OptionButton.BackgroundColor3 = Color3.fromRGB(0, 200, 140)
-            OptionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Opt.MouseEnter:Connect(function()
+            Opt.BackgroundColor3 = Color3.fromRGB(0, 200, 140)
+            OptText.TextColor3 = Color3.new(1, 1, 1)
         end)
         
-        OptionButton.MouseLeave:Connect(function()
-            OptionButton.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-            OptionLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        Opt.MouseLeave:Connect(function()
+            Opt.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+            OptText.TextColor3 = Color3.fromRGB(200, 200, 200)
         end)
         
-        -- Click
-        OptionButton.MouseButton1Click:Connect(function()
-            currentValue = optionText
-            ValueText.Text = optionText
-            
-            -- Close menu
-            isOpen = false
-            Arrow.Rotation = 0
+        Opt.MouseButton1Click:Connect(function()
+            current = opt
+            Value.Text = opt
+            open = false
+            List.Visible = false
+            List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
             Arrow.Text = "▼"
-            OptionsMenu.Visible = false
-            OptionsMenu.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
-            
-            -- Callback
             if GUICore then GUICore.PlayClickSound() end
-            if callback then callback(optionText) end
+            if callback then callback(opt) end
         end)
-        
-        table.insert(optionButtons, OptionButton)
     end
     
-    -- ════════════════════════════════════════════════════════════
-    -- CALCULATE MENU HEIGHT
-    -- ════════════════════════════════════════════════════════════
-    local function CalculateMenuHeight()
-        local itemHeight = isMobile and 24 or 20
-        local gap = 2
-        local padding = 8
-        local maxVisible = 5
-        local totalItems = #options
-        
-        local visibleItems = math.min(totalItems, maxVisible)
-        local contentHeight = (visibleItems * itemHeight) + ((visibleItems - 1) * gap)
-        local totalHeight = contentHeight + padding
-        
-        return totalHeight, totalItems > maxVisible
-    end
-    
-    -- ════════════════════════════════════════════════════════════
-    -- CHECK DIRECTION (UP OR DOWN)
-    -- ════════════════════════════════════════════════════════════
-    local function ShouldOpenUpward(menuHeight)
-        local containerY = DropdownContainer.AbsolutePosition.Y
-        local containerHeight = DropdownContainer.AbsoluteSize.Y
-        local parentY = parent.AbsolutePosition.Y
-        local parentHeight = parent.AbsoluteSize.Y
-        
-        local spaceBelow = (parentY + parentHeight) - (containerY + containerHeight)
-        local spaceAbove = containerY - parentY
-        
-        if spaceBelow >= menuHeight + 10 then
-            return false  -- Open down
-        elseif spaceAbove >= menuHeight + 10 then
-            return true  -- Open up
-        else
-            return spaceAbove > spaceBelow  -- Open where more space
-        end
-    end
-    
-    -- ════════════════════════════════════════════════════════════
-    -- OPEN MENU
-    -- ════════════════════════════════════════════════════════════
-    local function OpenMenu()
-        local menuHeight, needsScroll = CalculateMenuHeight()
-        local openUp = ShouldOpenUpward(menuHeight)
-        
-        -- Convert to ScrollingFrame if needed
-        if needsScroll and OptionsMenu.ClassName ~= "ScrollingFrame" then
-            local itemHeight = isMobile and 24 or 20
-            local gap = 2
-            local totalContentHeight = (#options * itemHeight) + ((#options - 1) * gap) + 8
-            
-            -- Create ScrollingFrame
-            local ScrollMenu = Instance.new("ScrollingFrame")
-            ScrollMenu.Size = OptionsMenu.Size
-            ScrollMenu.Position = OptionsMenu.Position
-            ScrollMenu.BackgroundColor3 = OptionsMenu.BackgroundColor3
-            ScrollMenu.BorderSizePixel = 0
-            ScrollMenu.Visible = false
-            ScrollMenu.ClipsDescendants = true
-            ScrollMenu.Parent = DropdownContainer
-            ScrollMenu.ZIndex = 9999  -- 🔥 SUPER HIGH!
-            
-            ScrollMenu.ScrollBarThickness = 3
-            ScrollMenu.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
-            ScrollMenu.ScrollBarImageTransparency = 0.4
-            ScrollMenu.CanvasSize = UDim2.fromOffset(0, totalContentHeight)
-            
-            Instance.new("UICorner", ScrollMenu).CornerRadius = UDim.new(0, 6)
-            
-            local ScrollStroke = Instance.new("UIStroke", ScrollMenu)
-            ScrollStroke.Color = Color3.fromRGB(0, 255, 170)
-            ScrollStroke.Thickness = 1.5
-            
-            local ScrollPadding = Instance.new("UIPadding", ScrollMenu)
-            ScrollPadding.PaddingTop = UDim.new(0, 4)
-            ScrollPadding.PaddingBottom = UDim.new(0, 4)
-            ScrollPadding.PaddingLeft = UDim.new(0, 4)
-            ScrollPadding.PaddingRight = UDim.new(0, 7)
-            
-            -- Move children
-            for _, child in ipairs(OptionsMenu:GetChildren()) do
-                if child:IsA("TextButton") or child:IsA("UIListLayout") then
-                    child.Parent = ScrollMenu
-                end
-            end
-            
-            OptionsMenu:Destroy()
-            OptionsMenu = ScrollMenu
-        end
-        
-        -- Set position
-        if openUp then
-            OptionsMenu.Position = UDim2.new(1, isMobile and -105 or -95, 0, -(menuHeight + 5))
-            Arrow.Text = "▲"
-        else
-            OptionsMenu.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
-            Arrow.Text = "▼"
-        end
-        
-        -- Show and animate
-        OptionsMenu.Visible = true
-        OptionsMenu.Size = UDim2.fromOffset(isMobile and 100 or 90, menuHeight)
-        Arrow.Rotation = 180
-    end
-    
-    -- ════════════════════════════════════════════════════════════
-    -- CLOSE MENU
-    -- ════════════════════════════════════════════════════════════
-    local function CloseMenu()
-        OptionsMenu.Visible = false
-        OptionsMenu.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
-        Arrow.Rotation = 0
-        Arrow.Text = "▼"
-    end
-    
-    -- ════════════════════════════════════════════════════════════
-    -- TOGGLE BUTTON
-    -- ════════════════════════════════════════════════════════════
-    DropButton.MouseButton1Click:Connect(function()
+    -- Toggle
+    Button.MouseButton1Click:Connect(function()
+        open = not open
         if GUICore then GUICore.PlayClickSound() end
         
-        isOpen = not isOpen
-        
-        if isOpen then
-            OpenMenu()
+        if open then
+            local h = math.min(#options, 5) * (isMobile and 24 or 20) + (#options - 1) * 2 + 8
+            
+            -- Check space
+            local cY = Container.AbsolutePosition.Y
+            local cH = Container.AbsoluteSize.Y
+            local pY = parent.AbsolutePosition.Y
+            local pH = parent.AbsoluteSize.Y
+            local below = (pY + pH) - (cY + cH)
+            local above = cY - pY
+            
+            if below >= h + 10 then
+                List.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
+                Arrow.Text = "▼"
+            elseif above >= h + 10 then
+                List.Position = UDim2.new(1, isMobile and -105 or -95, 0, -(h + 5))
+                Arrow.Text = "▲"
+            else
+                List.Position = UDim2.new(1, isMobile and -105 or -95, 1, 5)
+                Arrow.Text = "▼"
+            end
+            
+            List.Visible = true
+            List.Size = UDim2.fromOffset(isMobile and 100 or 90, h)
+            
+            -- Scroll if needed
+            if #options > 5 and List.ClassName ~= "ScrollingFrame" then
+                local S = Instance.new("ScrollingFrame")
+                S.Size = List.Size
+                S.Position = List.Position
+                S.BackgroundColor3 = List.BackgroundColor3
+                S.Visible = true
+                S.ClipsDescendants = true
+                S.ScrollBarThickness = 3
+                S.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
+                S.CanvasSize = UDim2.fromOffset(0, #options * (isMobile and 24 or 20) + (#options - 1) * 2 + 8)
+                S.Parent = Container
+                
+                Instance.new("UICorner", S).CornerRadius = UDim.new(0, 6)
+                Instance.new("UIStroke", S).Color = Color3.fromRGB(0, 255, 170)
+                Instance.new("UIStroke", S).Thickness = 1.5
+                
+                local P = Instance.new("UIPadding", S)
+                P.PaddingTop = UDim.new(0, 4)
+                P.PaddingBottom = UDim.new(0, 4)
+                P.PaddingLeft = UDim.new(0, 4)
+                P.PaddingRight = UDim.new(0, 7)
+                
+                for _, c in ipairs(List:GetChildren()) do
+                    c.Parent = S
+                end
+                
+                List:Destroy()
+                List = S
+            end
         else
-            CloseMenu()
+            List.Visible = false
+            List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
+            Arrow.Text = "▼"
         end
     end)
     
-    -- ════════════════════════════════════════════════════════════
-    -- CLICK OUTSIDE TO CLOSE
-    -- ════════════════════════════════════════════════════════════
-    game:GetService("UserInputService").InputBegan:Connect(function(input)
-        if not isOpen then return end
-        if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-        
+    -- Close outside
+    game:GetService("UserInputService").InputBegan:Connect(function(i)
+        if not open or i.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
         task.wait()
-        
-        local mouse = game:GetService("UserInputService"):GetMouseLocation()
-        
-        -- Check if clicked button
-        local btnPos = DropButton.AbsolutePosition
-        local btnSize = DropButton.AbsoluteSize
-        local clickedButton = mouse.X >= btnPos.X and mouse.X <= btnPos.X + btnSize.X and
-                              mouse.Y >= btnPos.Y and mouse.Y <= btnPos.Y + btnSize.Y
-        
-        -- Check if clicked menu
-        local menuPos = OptionsMenu.AbsolutePosition
-        local menuSize = OptionsMenu.AbsoluteSize
-        local clickedMenu = mouse.X >= menuPos.X and mouse.X <= menuPos.X + menuSize.X and
-                           mouse.Y >= menuPos.Y and mouse.Y <= menuPos.Y + menuSize.Y
-        
-        if not clickedButton and not clickedMenu then
-            isOpen = false
-            CloseMenu()
+        local m = game:GetService("UserInputService"):GetMouseLocation()
+        local bP = Button.AbsolutePosition
+        local bS = Button.AbsoluteSize
+        local lP = List.AbsolutePosition
+        local lS = List.AbsoluteSize
+        if not (m.X >= bP.X and m.X <= bP.X + bS.X and m.Y >= bP.Y and m.Y <= bP.Y + bS.Y) and
+           not (m.X >= lP.X and m.X <= lP.X + lS.X and m.Y >= lP.Y and m.Y <= lP.Y + lS.Y) then
+            open = false
+            List.Visible = false
+            List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
+            Arrow.Text = "▼"
         end
     end)
     
-    -- ════════════════════════════════════════════════════════════
-    -- RETURN
-    -- ════════════════════════════════════════════════════════════
-    return DropdownContainer, 
-           function() return currentValue end, 
-           function(newValue)
-               if table.find(options, newValue) then
-                   currentValue = newValue
-                   ValueText.Text = newValue
-               end
-           end
+    return Container, function() return current end, function(v)
+        if table.find(options, v) then
+            current = v
+            Value.Text = v
+        end
+    end
 end
 
 --════════════════════════════════════════════════════════════════
