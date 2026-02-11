@@ -496,18 +496,18 @@ function Components:CreateTextbox(parent, text, placeholder, callback)
 end
 
 --════════════════════════════════════════════════════════════════
--- CREATE DROPDOWN ✨ (FINAL FIX - SEPARATE SCREENGUI!)
+-- CREATE DROPDOWN ✨ (STABLE FIX - NO CHILD MOVING)
 --════════════════════════════════════════════════════════════════
 function Components:CreateDropdown(parent, text, options, default, callback)
+
     -- Container
     local Container = Instance.new("Frame")
     Container.Size = UDim2.new(1, 0, 0, isMobile and 40 or 32)
     Container.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
     Container.BorderSizePixel = 0
     Container.Parent = parent
-    
     Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 6)
-    
+
     -- Label
     local Label = Instance.new("TextLabel", Container)
     Label.Size = UDim2.new(1, -110, 1, 0)
@@ -516,9 +516,9 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Label.Text = text
     Label.Font = Enum.Font.Gotham
     Label.TextSize = isMobile and 11 or 10
-    Label.TextColor3 = Color3.new(1, 1, 1)
+    Label.TextColor3 = Color3.new(1,1,1)
     Label.TextXAlignment = Enum.TextXAlignment.Left
-    
+
     -- Button
     local Button = Instance.new("TextButton", Container)
     Button.Size = UDim2.fromOffset(isMobile and 100 or 90, isMobile and 28 or 24)
@@ -526,10 +526,9 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Button.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
     Button.Text = ""
     Button.AutoButtonColor = false
-    
     Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 4)
-    
-    -- Value
+
+    -- Value text
     local Value = Instance.new("TextLabel", Button)
     Value.Size = UDim2.new(1, -22, 1, 0)
     Value.Position = UDim2.fromOffset(6, 0)
@@ -537,10 +536,10 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Value.Text = default or options[1] or "..."
     Value.Font = Enum.Font.Gotham
     Value.TextSize = isMobile and 10 or 9
-    Value.TextColor3 = Color3.new(1, 1, 1)
+    Value.TextColor3 = Color3.new(1,1,1)
     Value.TextXAlignment = Enum.TextXAlignment.Left
     Value.TextTruncate = Enum.TextTruncate.AtEnd
-    
+
     -- Arrow
     local Arrow = Instance.new("TextLabel", Button)
     Arrow.Size = UDim2.fromOffset(14, 14)
@@ -549,74 +548,70 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Arrow.Text = "▼"
     Arrow.Font = Enum.Font.GothamBold
     Arrow.TextSize = 7
-    Arrow.TextColor3 = Color3.fromRGB(180, 180, 180)
-    
-    -- ════════════════════════════════════════════════════════════
-    -- 🔥 LIST DI SCREENGUI TERPISAH (GA KETUTUP!)
-    -- ════════════════════════════════════════════════════════════
+    Arrow.TextColor3 = Color3.fromRGB(180,180,180)
+
+    -- ScreenGui
     local ListGui = Instance.new("ScreenGui")
-    ListGui.Name = "DropdownList_" .. tostring(math.random(1000, 9999))
+    ListGui.Name = "Dropdown_"..math.random(1000,9999)
     ListGui.ResetOnSpawn = false
     ListGui.DisplayOrder = 999
     ListGui.Parent = game.CoreGui
-    
-    local List = Instance.new("Frame", ListGui)
+
+    -- ScrollingFrame (langsung dari awal)
+    local List = Instance.new("ScrollingFrame")
     List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
-    List.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    List.CanvasSize = UDim2.new(0,0,0,0)
+    List.ScrollBarThickness = 3
+    List.ScrollBarImageColor3 = Color3.fromRGB(0,255,170)
+    List.BackgroundColor3 = Color3.fromRGB(35,35,40)
     List.BorderSizePixel = 0
     List.Visible = false
     List.ClipsDescendants = true
-    
-    Instance.new("UICorner", List).CornerRadius = UDim.new(0, 6)
-    
+    List.Parent = ListGui
+
+    Instance.new("UICorner", List).CornerRadius = UDim.new(0,6)
+
     local Stroke = Instance.new("UIStroke", List)
-    Stroke.Color = Color3.fromRGB(0, 255, 170)
+    Stroke.Color = Color3.fromRGB(0,255,170)
     Stroke.Thickness = 1.5
-    
+
     local Padding = Instance.new("UIPadding", List)
-    Padding.PaddingTop = UDim.new(0, 4)
-    Padding.PaddingBottom = UDim.new(0, 4)
-    Padding.PaddingLeft = UDim.new(0, 4)
-    Padding.PaddingRight = UDim.new(0, 4)
-    
-    local ListLayout = Instance.new("UIListLayout", List)
-    ListLayout.Padding = UDim.new(0, 2)
-    
-    -- State
+    Padding.PaddingTop = UDim.new(0,4)
+    Padding.PaddingBottom = UDim.new(0,4)
+    Padding.PaddingLeft = UDim.new(0,4)
+    Padding.PaddingRight = UDim.new(0,4)
+
+    local Layout = Instance.new("UIListLayout", List)
+    Layout.Padding = UDim.new(0,2)
+
     local open = false
     local current = default or options[1]
-    
-    -- Create Options
-    for _, opt in ipairs(options) do
-        local Opt = Instance.new("TextButton", List)
+
+    -- Update canvas otomatis
+    Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        List.CanvasSize = UDim2.fromOffset(0, Layout.AbsoluteContentSize.Y + 8)
+    end)
+
+    -- Create options
+    for _,opt in ipairs(options) do
+        local Opt = Instance.new("TextButton")
         Opt.Size = UDim2.new(1, -8, 0, isMobile and 24 or 20)
-        Opt.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+        Opt.BackgroundColor3 = Color3.fromRGB(45,45,50)
         Opt.Text = ""
         Opt.AutoButtonColor = false
-        
-        Instance.new("UICorner", Opt).CornerRadius = UDim.new(0, 4)
-        
-        local OptText = Instance.new("TextLabel", Opt)
-        OptText.Size = UDim2.new(1, -6, 1, 0)
-        OptText.Position = UDim2.fromOffset(3, 0)
-        OptText.BackgroundTransparency = 1
-        OptText.Text = opt
-        OptText.Font = Enum.Font.Gotham
-        OptText.TextSize = isMobile and 9 or 8
-        OptText.TextColor3 = Color3.fromRGB(200, 200, 200)
-        OptText.TextXAlignment = Enum.TextXAlignment.Left
-        OptText.TextTruncate = Enum.TextTruncate.AtEnd
-        
-        Opt.MouseEnter:Connect(function()
-            Opt.BackgroundColor3 = Color3.fromRGB(0, 200, 140)
-            OptText.TextColor3 = Color3.new(1, 1, 1)
-        end)
-        
-        Opt.MouseLeave:Connect(function()
-            Opt.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-            OptText.TextColor3 = Color3.fromRGB(200, 200, 200)
-        end)
-        
+        Opt.Parent = List
+        Instance.new("UICorner", Opt).CornerRadius = UDim.new(0,4)
+
+        local T = Instance.new("TextLabel", Opt)
+        T.Size = UDim2.new(1,-6,1,0)
+        T.Position = UDim2.fromOffset(3,0)
+        T.BackgroundTransparency = 1
+        T.Text = opt
+        T.Font = Enum.Font.Gotham
+        T.TextSize = isMobile and 9 or 8
+        T.TextColor3 = Color3.fromRGB(200,200,200)
+        T.TextXAlignment = Enum.TextXAlignment.Left
+
         Opt.MouseButton1Click:Connect(function()
             current = opt
             Value.Text = opt
@@ -624,132 +619,60 @@ function Components:CreateDropdown(parent, text, options, default, callback)
             List.Visible = false
             List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
             Arrow.Text = "▼"
-            if GUICore then GUICore.PlayClickSound() end
             if callback then callback(opt) end
         end)
     end
-    
-    -- Toggle
+
+    -- Toggle dropdown
     Button.MouseButton1Click:Connect(function()
         open = not open
-        if GUICore then GUICore.PlayClickSound() end
-        
-       if open then
-    -- Hitung tinggi asli berdasarkan content
-    task.wait() -- pastikan AbsoluteContentSize update
-    local contentHeight = ListLayout.AbsoluteContentSize.Y + 8
-    local itemHeight = (isMobile and 24 or 20)
-    local maxVisibleHeight = itemHeight * 5 + 8
-    local finalHeight = math.min(contentHeight, maxVisibleHeight)
 
-    -- 🔥 POSISI ABSOLUTE BERDASARKAN BUTTON
-    local btnPos = Button.AbsolutePosition
-    local btnSize = Button.AbsoluteSize
-    local screenHeight = workspace.CurrentCamera.ViewportSize.Y
+        if open then
+            task.wait()
 
-    local spaceBelow = screenHeight - (btnPos.Y + btnSize.Y)
-    local spaceAbove = btnPos.Y
+            local contentHeight = Layout.AbsoluteContentSize.Y + 8
+            local itemHeight = (isMobile and 24 or 20)
+            local maxHeight = itemHeight * 5 + 8
+            local finalHeight = math.min(contentHeight, maxHeight)
 
-    if spaceBelow >= finalHeight + 10 then
-        List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
-        Arrow.Text = "▼"
-    elseif spaceAbove >= finalHeight + 10 then
-        List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y - finalHeight - 5)
-        Arrow.Text = "▲"
-    else
-        List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
-        Arrow.Text = "▼"
-    end
+            local btnPos = Button.AbsolutePosition
+            local btnSize = Button.AbsoluteSize
+            local screenHeight = workspace.CurrentCamera.ViewportSize.Y
 
-    List.Visible = true
-
-    -- 🔥 AUTO SCROLL JIKA PERLU
-    if contentHeight > maxVisibleHeight then
-        if not List:IsA("ScrollingFrame") then
-            local oldList = List
-
-            local S = Instance.new("ScrollingFrame")
-            S.Size = UDim2.fromOffset(isMobile and 100 or 90, finalHeight)
-            S.Position = oldList.Position
-            S.BackgroundColor3 = oldList.BackgroundColor3
-            S.BorderSizePixel = 0
-            S.ScrollBarThickness = 3
-            S.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
-            S.CanvasSize = UDim2.fromOffset(0, contentHeight)
-            S.Visible = true
-            S.ClipsDescendants = true
-            S.Parent = ListGui
-
-            Instance.new("UICorner", S).CornerRadius = UDim.new(0, 6)
-
-            local SS = Instance.new("UIStroke", S)
-            SS.Color = Color3.fromRGB(0, 255, 170)
-            SS.Thickness = 1.5
-
-            local P = Instance.new("UIPadding", S)
-            P.PaddingTop = UDim.new(0, 4)
-            P.PaddingBottom = UDim.new(0, 4)
-            P.PaddingLeft = UDim.new(0, 4)
-            P.PaddingRight = UDim.new(0, 7)
-
-            for _, c in ipairs(oldList:GetChildren()) do
-                if not c:IsA("UICorner") and
-                   not c:IsA("UIStroke") and
-                   not c:IsA("UIPadding") and
-                   not c:IsA("UIListLayout") then
-                    c.Parent = S
-                end
+            if screenHeight - (btnPos.Y + btnSize.Y) >= finalHeight + 10 then
+                List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
+                Arrow.Text = "▼"
+            else
+                List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y - finalHeight - 5)
+                Arrow.Text = "▲"
             end
 
-            List = S
-            oldList:Destroy()
-        else
             List.Size = UDim2.fromOffset(isMobile and 100 or 90, finalHeight)
-            List.CanvasSize = UDim2.fromOffset(0, contentHeight)
-        end
-    else
-        List.Size = UDim2.fromOffset(isMobile and 100 or 90, contentHeight)
-    end
-
+            List.Visible = true
         else
             List.Visible = false
             List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
             Arrow.Text = "▼"
         end
     end)
-    
-    -- Close outside
-    game:GetService("UserInputService").InputBegan:Connect(function(i)
-        if not open or i.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-        task.wait()
-        local m = game:GetService("UserInputService"):GetMouseLocation()
-        local bP = Button.AbsolutePosition
-        local bS = Button.AbsoluteSize
-        local lP = List.AbsolutePosition
-        local lS = List.AbsoluteSize
-        if not (m.X >= bP.X and m.X <= bP.X + bS.X and m.Y >= bP.Y and m.Y <= bP.Y + bS.Y) and
-           not (m.X >= lP.X and m.X <= lP.X + lS.X and m.Y >= lP.Y and m.Y <= lP.Y + lS.Y) then
-            open = false
-            List.Visible = false
-            List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
-            Arrow.Text = "▼"
-        end
-    end)
-    
+
     -- Cleanup
-    Container.AncestryChanged:Connect(function(_, p)
+    Container.AncestryChanged:Connect(function(_,p)
         if not p then
             ListGui:Destroy()
         end
     end)
-    
-    return Container, function() return current end, function(v)
-        if table.find(options, v) then
-            current = v
-            Value.Text = v
+
+    return Container,
+        function() return current end,
+        function(v)
+            if table.find(options,v) then
+                current = v
+                Value.Text = v
+            end
         end
-    end
 end
+
 
 
 --════════════════════════════════════════════════════════════════
