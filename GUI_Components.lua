@@ -498,216 +498,186 @@ end
 --════════════════════════════════════════════════════════════════
 -- CREATE DROPDOWN ✨ (SEPARATE GUI - STABLE & FOLLOW DRAG)
 --════════════════════════════════════════════════════════════════
+local OpenDropdown = nil
+
 function Components:CreateDropdown(parent, text, options, default, callback)
 
-    local TweenService = game:GetService("TweenService")
-    local UIS = game:GetService("UserInputService")
-    local RunService = game:GetService("RunService")
+	local isOpen = false
+	local current = default or options[1]
 
-    -- Container
-    local Container = Instance.new("Frame")
-    Container.Size = UDim2.new(1, 0, 0, isMobile and 40 or 32)
-    Container.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-    Container.BorderSizePixel = 0
-    Container.Parent = parent
-    Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 6)
+	-- CONTAINER
+	local Container = Instance.new("Frame")
+	Container.Size = UDim2.new(1, 0, 0, 34)
+	Container.BackgroundColor3 = Color3.fromRGB(35,35,40)
+	Container.BorderSizePixel = 0
+	Container.ClipsDescendants = true
+	Container.Parent = parent
+	Instance.new("UICorner", Container).CornerRadius = UDim.new(0,6)
 
-    -- Label
-    local Label = Instance.new("TextLabel", Container)
-    Label.Size = UDim2.new(1, -110, 1, 0)
-    Label.Position = UDim2.fromOffset(10, 0)
-    Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.Font = Enum.Font.Gotham
-    Label.TextSize = isMobile and 11 or 10
-    Label.TextColor3 = Color3.new(1,1,1)
-    Label.TextXAlignment = Enum.TextXAlignment.Left
+	-- LABEL
+	local Label = Instance.new("TextLabel")
+	Label.Size = UDim2.new(1,-100,1,0)
+	Label.Position = UDim2.new(0,10,0,0)
+	Label.BackgroundTransparency = 1
+	Label.Text = text
+	Label.Font = Enum.Font.Gotham
+	Label.TextSize = 11
+	Label.TextColor3 = Color3.new(1,1,1)
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.Parent = Container
 
-    -- Button
-    local Button = Instance.new("TextButton", Container)
-    Button.Size = UDim2.fromOffset(isMobile and 100 or 90, isMobile and 28 or 24)
-    Button.Position = UDim2.new(1, isMobile and -105 or -95, 0.5, isMobile and -14 or -12)
-    Button.BackgroundColor3 = Color3.fromRGB(50,50,55)
-    Button.Text = ""
-    Button.AutoButtonColor = false
-    Instance.new("UICorner", Button).CornerRadius = UDim.new(0,4)
+	-- BUTTON
+	local Button = Instance.new("TextButton")
+	Button.Size = UDim2.new(0,90,0,24)
+	Button.Position = UDim2.new(1,-95,0.5,-12)
+	Button.BackgroundColor3 = Color3.fromRGB(45,45,50)
+	Button.Text = ""
+	Button.AutoButtonColor = false
+	Button.Parent = Container
+	Instance.new("UICorner", Button).CornerRadius = UDim.new(0,4)
 
-    -- Value
-    local Value = Instance.new("TextLabel", Button)
-    Value.Size = UDim2.new(1,-22,1,0)
-    Value.Position = UDim2.fromOffset(6,0)
-    Value.BackgroundTransparency = 1
-    Value.Text = default or options[1] or "..."
-    Value.Font = Enum.Font.Gotham
-    Value.TextSize = isMobile and 10 or 9
-    Value.TextColor3 = Color3.new(1,1,1)
-    Value.TextXAlignment = Enum.TextXAlignment.Left
+	-- VALUE TEXT
+	local Value = Instance.new("TextLabel")
+	Value.Size = UDim2.new(1,-18,1,0)
+	Value.Position = UDim2.new(0,6,0,0)
+	Value.BackgroundTransparency = 1
+	Value.Text = current
+	Value.Font = Enum.Font.Gotham
+	Value.TextSize = 10
+	Value.TextColor3 = Color3.new(1,1,1)
+	Value.TextXAlignment = Enum.TextXAlignment.Left
+	Value.Parent = Button
 
-    -- Arrow
-    local Arrow = Instance.new("TextLabel", Button)
-    Arrow.Size = UDim2.fromOffset(14,14)
-    Arrow.Position = UDim2.new(1,-16,0.5,-7)
-    Arrow.BackgroundTransparency = 1
-    Arrow.Text = "▼"
-    Arrow.Font = Enum.Font.GothamBold
-    Arrow.TextSize = 7
-    Arrow.TextColor3 = Color3.fromRGB(180,180,180)
+	-- ARROW
+	local Arrow = Instance.new("TextLabel")
+	Arrow.Size = UDim2.new(0,14,0,14)
+	Arrow.Position = UDim2.new(1,-16,0.5,-7)
+	Arrow.BackgroundTransparency = 1
+	Arrow.Text = "▼"
+	Arrow.Font = Enum.Font.GothamBold
+	Arrow.TextSize = 9
+	Arrow.TextColor3 = Color3.fromRGB(180,180,180)
+	Arrow.Parent = Button
 
-    -- ScreenGui
-    local ListGui = Instance.new("ScreenGui")
-    ListGui.ResetOnSpawn = false
-    ListGui.DisplayOrder = 999
-    ListGui.Parent = game.CoreGui
+	-- DROPDOWN FRAME (DI DALAM CONTAINER)
+	local DropFrame = Instance.new("Frame")
+	DropFrame.Size = UDim2.new(1, -10, 0, 0)
+	DropFrame.Position = UDim2.new(0,5,1,4)
+	DropFrame.BackgroundColor3 = Color3.fromRGB(30,30,35)
+	DropFrame.BorderSizePixel = 0
+	DropFrame.ClipsDescendants = true
+	DropFrame.Visible = false
+	DropFrame.Parent = Container
+	Instance.new("UICorner", DropFrame).CornerRadius = UDim.new(0,6)
 
-    -- ScrollingFrame (langsung dari awal)
-    local List = Instance.new("ScrollingFrame")
-    List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
-    List.CanvasSize = UDim2.new(0,0,0,0)
-    List.ScrollBarThickness = 3
-    List.ScrollBarImageColor3 = Color3.fromRGB(0,255,170)
-    List.BackgroundColor3 = Color3.fromRGB(35,35,40)
-    List.BorderSizePixel = 0
-    List.Visible = false
-    List.ClipsDescendants = true
-    List.Parent = ListGui
+	local Layout = Instance.new("UIListLayout", DropFrame)
+	Layout.Padding = UDim.new(0,4)
 
-    Instance.new("UICorner", List).CornerRadius = UDim.new(0,6)
-    local Stroke = Instance.new("UIStroke", List)
-    Stroke.Color = Color3.fromRGB(0,255,170)
-    Stroke.Thickness = 1.5
+	local Padding = Instance.new("UIPadding", DropFrame)
+	Padding.PaddingTop = UDim.new(0,4)
+	Padding.PaddingBottom = UDim.new(0,4)
+	Padding.PaddingLeft = UDim.new(0,4)
+	Padding.PaddingRight = UDim.new(0,4)
 
-    local Padding = Instance.new("UIPadding", List)
-    Padding.PaddingTop = UDim.new(0,4)
-    Padding.PaddingBottom = UDim.new(0,4)
-    Padding.PaddingLeft = UDim.new(0,4)
-    Padding.PaddingRight = UDim.new(0,7)
+	-- OPTIONS
+	for _,opt in ipairs(options) do
+		local Opt = Instance.new("TextButton")
+		Opt.Size = UDim2.new(1,0,0,22)
+		Opt.BackgroundColor3 = Color3.fromRGB(45,45,50)
+		Opt.Text = opt
+		Opt.Font = Enum.Font.Gotham
+		Opt.TextSize = 10
+		Opt.TextColor3 = Color3.new(1,1,1)
+		Opt.AutoButtonColor = false
+		Opt.Parent = DropFrame
+		Instance.new("UICorner", Opt).CornerRadius = UDim.new(0,4)
 
-    local Layout = Instance.new("UIListLayout", List)
-    Layout.Padding = UDim.new(0,2)
+		Opt.MouseEnter:Connect(function()
+			TweenService:Create(Opt,TweenInfo.new(0.15),{
+				BackgroundColor3 = Color3.fromRGB(0,200,140)
+			}):Play()
+		end)
 
-    -- Auto canvas update
-    Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        List.CanvasSize = UDim2.fromOffset(0, Layout.AbsoluteContentSize.Y + 8)
-    end)
+		Opt.MouseLeave:Connect(function()
+			TweenService:Create(Opt,TweenInfo.new(0.15),{
+				BackgroundColor3 = Color3.fromRGB(45,45,50)
+			}):Play()
+		end)
 
-    local open = false
-    local current = default or options[1]
-    local renderConnection
+		Opt.MouseButton1Click:Connect(function()
+			current = opt
+			Value.Text = opt
+			if callback then callback(opt) end
+			Close()
+		end)
+	end
 
-    -- Create options
-    for _,opt in ipairs(options) do
-        local Opt = Instance.new("TextButton")
-        Opt.Size = UDim2.new(1,-8,0,isMobile and 24 or 20)
-        Opt.BackgroundColor3 = Color3.fromRGB(45,45,50)
-        Opt.Text = opt
-        Opt.Font = Enum.Font.Gotham
-        Opt.TextSize = isMobile and 9 or 8
-        Opt.TextColor3 = Color3.fromRGB(200,200,200)
-        Opt.AutoButtonColor = false
-        Opt.Parent = List
-        Instance.new("UICorner", Opt).CornerRadius = UDim.new(0,4)
+	-- UPDATE SIZE
+	local function GetSize()
+		return Layout.AbsoluteContentSize.Y + 8
+	end
 
-        Opt.MouseButton1Click:Connect(function()
-            current = opt
-            Value.Text = opt
-            if callback then callback(opt) end
-            open = false
-            List.Visible = false
-            Arrow.Text = "▼"
-        end)
-    end
+	function Open()
+		if OpenDropdown and OpenDropdown ~= Container then
+			OpenDropdown:FindFirstChild("DropFrame", true).Visible = false
+		end
 
-    -- Update position follow button
-    local function updatePosition()
-        local btnPos = Button.AbsolutePosition
-        local btnSize = Button.AbsoluteSize
+		isOpen = true
+		DropFrame.Visible = true
+		Arrow.Text = "▲"
 
-        List.Position = UDim2.fromOffset(
-            btnPos.X,
-            btnPos.Y + btnSize.Y + 5
-        )
-    end
+		TweenService:Create(DropFrame,TweenInfo.new(0.2,Enum.EasingStyle.Quad),{
+			Size = UDim2.new(1,-10,0,GetSize())
+		}):Play()
 
-    -- Toggle
-    Button.MouseButton1Click:Connect(function()
-        open = not open
-        if GUICore then GUICore.PlayClickSound() end
+		OpenDropdown = Container
+	end
 
-        if open then
-            List.Visible = true
-            Arrow.Text = "▲"
+	function Close()
+		isOpen = false
+		Arrow.Text = "▼"
 
-            task.wait()
-            local height = math.min(Layout.AbsoluteContentSize.Y + 8,
-                (isMobile and 24 or 20) * 5 + 8)
+		TweenService:Create(DropFrame,TweenInfo.new(0.2,Enum.EasingStyle.Quad),{
+			Size = UDim2.new(1,-10,0,0)
+		}):Play()
 
-            List.Size = UDim2.fromOffset(isMobile and 100 or 90, height)
-            updatePosition()
+		task.delay(0.2,function()
+			if not isOpen then
+				DropFrame.Visible = false
+			end
+		end)
+	end
 
-            renderConnection = RunService.RenderStepped:Connect(function()
-                if not open then return end
-                if not Container:IsDescendantOf(game) then
-                    open = false
-                    List.Visible = false
-                    return
-                end
-                updatePosition()
-            end)
+	Button.MouseButton1Click:Connect(function()
+		if isOpen then
+			Close()
+		else
+			Open()
+		end
+	end)
 
-        else
-            List.Visible = false
-            Arrow.Text = "▼"
-            if renderConnection then
-                renderConnection:Disconnect()
-                renderConnection = nil
-            end
-        end
-    end)
+	-- CLOSE CLICK OUTSIDE
+	UserInputService.InputBegan:Connect(function(input,gpe)
+		if gpe then return end
+		if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
+			local m = UserInputService:GetMouseLocation()
+			local p = DropFrame.AbsolutePosition
+			local s = DropFrame.AbsoluteSize
+			local bp = Button.AbsolutePosition
+			local bs = Button.AbsoluteSize
 
-    -- Close outside click
-    UIS.InputBegan:Connect(function(input)
-        if not open then return end
-        if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+			local inDrop = m.X >= p.X and m.X <= p.X+s.X and m.Y >= p.Y and m.Y <= p.Y+s.Y
+			local inButton = m.X >= bp.X and m.X <= bp.X+bs.X and m.Y >= bp.Y and m.Y <= bp.Y+bs.Y
 
-        local mouse = UIS:GetMouseLocation()
-        local bPos = Button.AbsolutePosition
-        local bSize = Button.AbsoluteSize
-        local lPos = List.AbsolutePosition
-        local lSize = List.AbsoluteSize
+			if not inDrop and not inButton then
+				Close()
+			end
+		end
+	end)
 
-        local inButton = mouse.X >= bPos.X and mouse.X <= bPos.X + bSize.X
-            and mouse.Y >= bPos.Y and mouse.Y <= bPos.Y + bSize.Y
-
-        local inList = mouse.X >= lPos.X and mouse.X <= lPos.X + lSize.X
-            and mouse.Y >= lPos.Y and mouse.Y <= lPos.Y + lSize.Y
-
-        if not inButton and not inList then
-            open = false
-            List.Visible = false
-            Arrow.Text = "▼"
-            if renderConnection then
-                renderConnection:Disconnect()
-                renderConnection = nil
-            end
-        end
-    end)
-
-    -- Cleanup
-    Container.AncestryChanged:Connect(function(_,p)
-        if not p then
-            ListGui:Destroy()
-        end
-    end)
-
-    return Container,
-        function() return current end,
-        function(v)
-            if table.find(options,v) then
-                current = v
-                Value.Text = v
-            end
-        end
+	return Container
 end
+
 
 
 --════════════════════════════════════════════════════════════════
