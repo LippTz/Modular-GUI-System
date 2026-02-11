@@ -650,11 +650,11 @@ function Components:CreateDropdown(parent, text, options, default, callback)
                 List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
                 Arrow.Text = "▼"
             elseif spaceAbove >= h + 10 then
-                // Open UP
+                -- Open UP
                 List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y - h - 5)
                 Arrow.Text = "▲"
             else
-                // Default down
+                -- Default down
                 List.Position = UDim2.fromOffset(btnPos.X, btnPos.Y + btnSize.Y + 5)
                 Arrow.Text = "▼"
             end
@@ -732,6 +732,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         end
     end
 end
+
 
 --════════════════════════════════════════════════════════════════
 -- CREATE COLOR PICKER
