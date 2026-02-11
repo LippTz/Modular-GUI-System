@@ -496,7 +496,7 @@ function Components:CreateTextbox(parent, text, placeholder, callback)
 end
 
 --════════════════════════════════════════════════════════════════
--- CREATE DROPDOWN ✨ (BRAND NEW - SIMPLE & RELIABLE!)
+-- CREATE DROPDOWN ✨ (FIXED - HIGHEST ZINDEX!)
 --════════════════════════════════════════════════════════════════
 function Components:CreateDropdown(parent, text, options, default, callback)
     -- ════════════════════════════════════════════════════════════
@@ -506,8 +506,9 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     DropdownContainer.Size = UDim2.new(1, 0, 0, isMobile and 40 or 32)
     DropdownContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
     DropdownContainer.BorderSizePixel = 0
-    DropdownContainer.ClipsDescendants = false
+    DropdownContainer.ClipsDescendants = false  -- CRITICAL!
     DropdownContainer.Parent = parent
+    DropdownContainer.ZIndex = 1
     
     Instance.new("UICorner", DropdownContainer).CornerRadius = UDim.new(0, 6)
     
@@ -523,6 +524,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Label.TextSize = isMobile and 11 or 10
     Label.TextColor3 = Color3.fromRGB(255, 255, 255)
     Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.ZIndex = 2
     
     -- ════════════════════════════════════════════════════════════
     -- DROPDOWN BUTTON
@@ -534,6 +536,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     DropButton.BorderSizePixel = 0
     DropButton.AutoButtonColor = false
     DropButton.Text = ""
+    DropButton.ZIndex = 2
     
     Instance.new("UICorner", DropButton).CornerRadius = UDim.new(0, 4)
     
@@ -548,6 +551,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     ValueText.TextColor3 = Color3.fromRGB(255, 255, 255)
     ValueText.TextXAlignment = Enum.TextXAlignment.Left
     ValueText.TextTruncate = Enum.TextTruncate.AtEnd
+    ValueText.ZIndex = 3
     
     -- Arrow
     local Arrow = Instance.new("TextLabel", DropButton)
@@ -558,9 +562,10 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Arrow.Font = Enum.Font.GothamBold
     Arrow.TextSize = 8
     Arrow.TextColor3 = Color3.fromRGB(180, 180, 180)
+    Arrow.ZIndex = 3
     
     -- ════════════════════════════════════════════════════════════
-    -- OPTIONS MENU (HIDDEN BY DEFAULT)
+    -- OPTIONS MENU (SUPER HIGH ZINDEX!) 🔥🔥🔥
     -- ════════════════════════════════════════════════════════════
     local OptionsMenu = Instance.new("Frame", DropdownContainer)
     OptionsMenu.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
@@ -569,6 +574,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     OptionsMenu.BorderSizePixel = 0
     OptionsMenu.Visible = false
     OptionsMenu.ClipsDescendants = true
+    OptionsMenu.ZIndex = 9999  -- 🔥 SUPER HIGH ZINDEX!
     
     Instance.new("UICorner", OptionsMenu).CornerRadius = UDim.new(0, 6)
     
@@ -593,7 +599,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     local currentValue = default or options[1]
     
     -- ════════════════════════════════════════════════════════════
-    -- CREATE OPTIONS
+    -- CREATE OPTIONS (HIGH ZINDEX!)
     -- ════════════════════════════════════════════════════════════
     local optionButtons = {}
     
@@ -605,6 +611,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         OptionButton.AutoButtonColor = false
         OptionButton.Text = ""
         OptionButton.LayoutOrder = i
+        OptionButton.ZIndex = 10000  -- 🔥 EVEN HIGHER!
         
         Instance.new("UICorner", OptionButton).CornerRadius = UDim.new(0, 4)
         
@@ -618,6 +625,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
         OptionLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
         OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
         OptionLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        OptionLabel.ZIndex = 10001  -- 🔥 HIGHEST!
         
         -- Hover
         OptionButton.MouseEnter:Connect(function()
@@ -710,6 +718,7 @@ function Components:CreateDropdown(parent, text, options, default, callback)
             ScrollMenu.Visible = false
             ScrollMenu.ClipsDescendants = true
             ScrollMenu.Parent = DropdownContainer
+            ScrollMenu.ZIndex = 9999  -- 🔥 SUPER HIGH!
             
             ScrollMenu.ScrollBarThickness = 3
             ScrollMenu.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
@@ -730,7 +739,9 @@ function Components:CreateDropdown(parent, text, options, default, callback)
             
             -- Move children
             for _, child in ipairs(OptionsMenu:GetChildren()) do
-                child.Parent = ScrollMenu
+                if child:IsA("TextButton") or child:IsA("UIListLayout") then
+                    child.Parent = ScrollMenu
+                end
             end
             
             OptionsMenu:Destroy()
