@@ -496,12 +496,13 @@ function Components:CreateTextbox(parent, text, placeholder, callback)
 end
 
 --════════════════════════════════════════════════════════════════
--- CREATE DROPDOWN ✨ (PROPER FIX - FOLLOW GUI + ANIMATION)
+-- CREATE DROPDOWN ✨ (SEPARATE GUI - STABLE & FOLLOW DRAG)
 --════════════════════════════════════════════════════════════════
 function Components:CreateDropdown(parent, text, options, default, callback)
 
     local TweenService = game:GetService("TweenService")
     local UIS = game:GetService("UserInputService")
+    local RunService = game:GetService("RunService")
 
     -- Container
     local Container = Instance.new("Frame")
@@ -509,7 +510,6 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Container.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
     Container.BorderSizePixel = 0
     Container.Parent = parent
-    Container.ZIndex = 5
     Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 6)
 
     -- Label
@@ -522,79 +522,88 @@ function Components:CreateDropdown(parent, text, options, default, callback)
     Label.TextSize = isMobile and 11 or 10
     Label.TextColor3 = Color3.new(1,1,1)
     Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.ZIndex = 6
 
     -- Button
     local Button = Instance.new("TextButton", Container)
     Button.Size = UDim2.fromOffset(isMobile and 100 or 90, isMobile and 28 or 24)
     Button.Position = UDim2.new(1, isMobile and -105 or -95, 0.5, isMobile and -14 or -12)
-    Button.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    Button.BackgroundColor3 = Color3.fromRGB(50,50,55)
     Button.Text = ""
     Button.AutoButtonColor = false
-    Button.ZIndex = 6
-    Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", Button).CornerRadius = UDim.new(0,4)
 
     -- Value
     local Value = Instance.new("TextLabel", Button)
-    Value.Size = UDim2.new(1, -22, 1, 0)
-    Value.Position = UDim2.fromOffset(6, 0)
+    Value.Size = UDim2.new(1,-22,1,0)
+    Value.Position = UDim2.fromOffset(6,0)
     Value.BackgroundTransparency = 1
     Value.Text = default or options[1] or "..."
     Value.Font = Enum.Font.Gotham
     Value.TextSize = isMobile and 10 or 9
     Value.TextColor3 = Color3.new(1,1,1)
     Value.TextXAlignment = Enum.TextXAlignment.Left
-    Value.TextTruncate = Enum.TextTruncate.AtEnd
-    Value.ZIndex = 7
 
     -- Arrow
     local Arrow = Instance.new("TextLabel", Button)
-    Arrow.Size = UDim2.fromOffset(14, 14)
-    Arrow.Position = UDim2.new(1, -16, 0.5, -7)
+    Arrow.Size = UDim2.fromOffset(14,14)
+    Arrow.Position = UDim2.new(1,-16,0.5,-7)
     Arrow.BackgroundTransparency = 1
     Arrow.Text = "▼"
     Arrow.Font = Enum.Font.GothamBold
     Arrow.TextSize = 7
     Arrow.TextColor3 = Color3.fromRGB(180,180,180)
-    Arrow.ZIndex = 7
 
-    -- Dropdown List (di dalam container, bukan ScreenGui)
-    local List = Instance.new("Frame", Container)
-    List.Position = UDim2.new(0, 0, 1, 4)
-    List.Size = UDim2.new(1, 0, 0, 0)
+    -- ScreenGui
+    local ListGui = Instance.new("ScreenGui")
+    ListGui.ResetOnSpawn = false
+    ListGui.DisplayOrder = 999
+    ListGui.Parent = game.CoreGui
+
+    -- ScrollingFrame (langsung dari awal)
+    local List = Instance.new("ScrollingFrame")
+    List.Size = UDim2.fromOffset(isMobile and 100 or 90, 0)
+    List.CanvasSize = UDim2.new(0,0,0,0)
+    List.ScrollBarThickness = 3
+    List.ScrollBarImageColor3 = Color3.fromRGB(0,255,170)
     List.BackgroundColor3 = Color3.fromRGB(35,35,40)
     List.BorderSizePixel = 0
-    List.ClipsDescendants = true
     List.Visible = false
-    List.ZIndex = 10
-    Instance.new("UICorner", List).CornerRadius = UDim.new(0,6)
+    List.ClipsDescendants = true
+    List.Parent = ListGui
 
+    Instance.new("UICorner", List).CornerRadius = UDim.new(0,6)
     local Stroke = Instance.new("UIStroke", List)
     Stroke.Color = Color3.fromRGB(0,255,170)
     Stroke.Thickness = 1.5
 
+    local Padding = Instance.new("UIPadding", List)
+    Padding.PaddingTop = UDim.new(0,4)
+    Padding.PaddingBottom = UDim.new(0,4)
+    Padding.PaddingLeft = UDim.new(0,4)
+    Padding.PaddingRight = UDim.new(0,7)
+
     local Layout = Instance.new("UIListLayout", List)
     Layout.Padding = UDim.new(0,2)
 
+    -- Auto canvas update
+    Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        List.CanvasSize = UDim2.fromOffset(0, Layout.AbsoluteContentSize.Y + 8)
+    end)
+
     local open = false
     local current = default or options[1]
-
-    -- Auto canvas height
-    local function getHeight()
-        return Layout.AbsoluteContentSize.Y + 6
-    end
+    local renderConnection
 
     -- Create options
     for _,opt in ipairs(options) do
         local Opt = Instance.new("TextButton")
-        Opt.Size = UDim2.new(1, -6, 0, isMobile and 24 or 20)
+        Opt.Size = UDim2.new(1,-8,0,isMobile and 24 or 20)
         Opt.BackgroundColor3 = Color3.fromRGB(45,45,50)
         Opt.Text = opt
         Opt.Font = Enum.Font.Gotham
         Opt.TextSize = isMobile and 9 or 8
         Opt.TextColor3 = Color3.fromRGB(200,200,200)
         Opt.AutoButtonColor = false
-        Opt.ZIndex = 11
         Opt.Parent = List
         Instance.new("UICorner", Opt).CornerRadius = UDim.new(0,4)
 
@@ -602,57 +611,91 @@ function Components:CreateDropdown(parent, text, options, default, callback)
             current = opt
             Value.Text = opt
             if callback then callback(opt) end
-            Button:Activate()
+            open = false
+            List.Visible = false
+            Arrow.Text = "▼"
         end)
     end
 
-    -- Close function
-    local function closeDropdown()
-        open = false
-        Arrow.Text = "▼"
+    -- Update position follow button
+    local function updatePosition()
+        local btnPos = Button.AbsolutePosition
+        local btnSize = Button.AbsoluteSize
 
-        TweenService:Create(List, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            Size = UDim2.new(1,0,0,0)
-        }):Play()
-
-        task.wait(0.2)
-        if not open then
-            List.Visible = false
-        end
+        List.Position = UDim2.fromOffset(
+            btnPos.X,
+            btnPos.Y + btnSize.Y + 5
+        )
     end
 
     -- Toggle
     Button.MouseButton1Click:Connect(function()
         open = not open
-
         if GUICore then GUICore.PlayClickSound() end
 
         if open then
             List.Visible = true
             Arrow.Text = "▲"
 
-            local height = math.min(getHeight(), (isMobile and 24 or 20) * 5)
+            task.wait()
+            local height = math.min(Layout.AbsoluteContentSize.Y + 8,
+                (isMobile and 24 or 20) * 5 + 8)
 
-            TweenService:Create(List, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                Size = UDim2.new(1,0,0,height)
-            }):Play()
+            List.Size = UDim2.fromOffset(isMobile and 100 or 90, height)
+            updatePosition()
+
+            renderConnection = RunService.RenderStepped:Connect(function()
+                if not open then return end
+                if not Container:IsDescendantOf(game) then
+                    open = false
+                    List.Visible = false
+                    return
+                end
+                updatePosition()
+            end)
+
         else
-            closeDropdown()
+            List.Visible = false
+            Arrow.Text = "▼"
+            if renderConnection then
+                renderConnection:Disconnect()
+                renderConnection = nil
+            end
         end
     end)
 
-    -- Close when clicking outside
+    -- Close outside click
     UIS.InputBegan:Connect(function(input)
         if not open then return end
         if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
 
-        local mousePos = UIS:GetMouseLocation()
-        local absPos = List.AbsolutePosition
-        local absSize = List.AbsoluteSize
+        local mouse = UIS:GetMouseLocation()
+        local bPos = Button.AbsolutePosition
+        local bSize = Button.AbsoluteSize
+        local lPos = List.AbsolutePosition
+        local lSize = List.AbsoluteSize
 
-        if not (mousePos.X >= absPos.X and mousePos.X <= absPos.X + absSize.X
-            and mousePos.Y >= absPos.Y and mousePos.Y <= absPos.Y + absSize.Y) then
-            closeDropdown()
+        local inButton = mouse.X >= bPos.X and mouse.X <= bPos.X + bSize.X
+            and mouse.Y >= bPos.Y and mouse.Y <= bPos.Y + bSize.Y
+
+        local inList = mouse.X >= lPos.X and mouse.X <= lPos.X + lSize.X
+            and mouse.Y >= lPos.Y and mouse.Y <= lPos.Y + lSize.Y
+
+        if not inButton and not inList then
+            open = false
+            List.Visible = false
+            Arrow.Text = "▼"
+            if renderConnection then
+                renderConnection:Disconnect()
+                renderConnection = nil
+            end
+        end
+    end)
+
+    -- Cleanup
+    Container.AncestryChanged:Connect(function(_,p)
+        if not p then
+            ListGui:Destroy()
         end
     end)
 
@@ -665,7 +708,6 @@ function Components:CreateDropdown(parent, text, options, default, callback)
             end
         end
 end
-
 
 
 --════════════════════════════════════════════════════════════════
